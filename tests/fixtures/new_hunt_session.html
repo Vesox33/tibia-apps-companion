@@ -1,0 +1,3211 @@
+<!DOCTYPE html>
+<!-- saved from url=(0043)/hunt_sessions/new -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>HuntAnalyser</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- CSRF Meta Tags -->
+  <meta name="csrf-param" content="authenticity_token">
+
+  
+
+  
+
+  <!-- Stylesheets -->
+  
+  
+
+
+  <!-- Font Awesome -->
+  
+
+  <!-- Favicons for different devices -->
+  
+  
+  
+
+  <!-- Apple Touch Icon for iOS -->
+  
+
+  <!-- Android specific -->
+  
+
+  <!-- Manifest (optional for web app capabilities) -->
+  
+
+    <!-- Google Analytics (or other tracking codes) -->
+    
+    
+
+  <!-- JavaScript (if needed) -->
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<meta name="csrf-token" content="BpVS83qH2UGlPapWux1D98_YQ56NLs2kYImmDoPXxqfSe-_-7LZbbhcvIVRxNBVXAAe4vTkBy0xZnQABtoa84g"><style>.hidden{display:none}</style></head>
+
+
+  <body class="ha-body text-brand-ink" data-controller="header-menu-toggle">
+      <header class="ha-nav relative z-[9999]">
+        <nav class="container relative mx-auto flex flex-nowrap justify-between items-center px-2 py-1 md:px-3 md:py-1.5">
+          <!-- Brand or Logo -->
+          <div class="flex items-center w-32 h-12 gap-2">
+            <a class="flex items-center" href="/"><img alt="Hunt Analyser" class="ha-logo rounded-full ring-2 ring-brand-ember/40" src=""></a>
+          </div>
+
+          <!-- Navigation Links -->
+            <button class="absolute left-1/2 -translate-x-1/2 z-10 ha-nav-pill ha-nav-pill-compact" data-mobile-menu="main" data-action="click-&gt;header-menu-toggle#toggleMobile">
+              MENU
+              <i class="fas fa-chevron-down ml-auto ha-nav-icon"></i>
+            </button>
+
+            <div class="ml-auto flex items-center gap-2">
+                            <details class="relative" data-controller="notification-center" data-action="click@window-&gt;notification-center#closeOnOutside">
+                <summary class="relative flex h-8 w-8 items-center justify-center rounded-full border border-brand-surface-3 bg-brand-surface-1 hover:bg-brand-surface-2/70 list-none cursor-pointer">
+                  <i class="fas fa-bell text-sm text-primary"></i>
+                  <span id="notifications_badge_desktop" class="absolute -top-2 right-0 translate-x-1/2 pointer-events-none">
+                      <span class="inline-flex min-w-[16px] h-4 items-center justify-center rounded-full bg-brand-ember/90 px-1 text-[10px] font-bold text-white leading-none">
+    3
+  </span>
+
+                  </span>
+                </summary>
+                <div class="fixed left-1/2 -translate-x-1/2 top-12 mt-2 z-50 sm:absolute sm:left-auto sm:translate-x-0 sm:right-0 sm:top-auto">
+                  <turbo-frame loading="lazy" id="notifications_dropdown" src="/notifications">
+                    
+<div class="ha-menu-card w-[min(26rem,calc(100vw-0.75rem))] p-3 space-y-3">
+  <div class="flex items-center justify-between px-1">
+    <h3 class="text-sm font-semibold text-brand-ink">Notifications</h3>
+  </div>
+
+    
+<div class="rounded-md border border-brand-surface-3 bg-brand-surface-2/60 p-4 text-sm text-brand-ink-soft">
+  <div class="flex items-center justify-center gap-2">
+    <i class="fas fa-spinner fa-spin text-primary"></i>
+    <span>Loading notifications...</span>
+  </div>
+</div>
+
+</div>
+
+</turbo-frame>                </div>
+              </details>
+              <button class="ha-nav-pill ha-nav-pill-compact" data-mobile-menu="account" data-action="click-&gt;header-menu-toggle#toggleMobile">
+                <i class="fas fa-circle-user ml-auto ha-nav-icon"></i>
+                <span class="truncate">
+                  Vesox
+                </span>
+                <i class="fas fa-chevron-down ml-auto ha-nav-icon"></i>
+              </button>
+            </div>
+
+        </nav>
+      </header>
+
+
+    <div class="container mx-auto md:p-8">
+      <div class="flex flex-col gap-3 xl:flex-row xl:items-start">
+
+        <div class="order-1 min-w-0 w-full xl:order-2 xl:flex-1">
+          <nav class="ha-panel p-3 mb-4">
+  <ol class="list-reset flex flex-wrap items-center gap-2 text-sm text-brand-ink-soft">
+      <li class="inline-flex items-center">
+          <a class="font-semibold text-brand-ink transition" href="/hunt_sessions?hunt_sessions_by=all">Hunt Sessions</a>
+          <span class="mx-1 text-brand-ink-soft">/</span>
+      </li>
+      <li class="inline-flex items-center">
+          <span class="font-semibold text-brand-ember/80">New</span>
+      </li>
+  </ol>
+</nav>
+
+
+          <turbo-frame class="relative" id="flash">
+</turbo-frame>
+          <turbo-frame id="limit_reached"></turbo-frame>
+
+          <div class="mx-auto px-2 py-4 text-brand-ink">
+  <div class="mb-6">
+    
+<div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+  <div>
+    <div class="flex items-center gap-2">
+    </div>
+    <h1 class="font-display text-3xl md:text-4xl font-bold text-brand-ink">New hunt session</h1>
+      <span class="mt-2 text-sm text-brand-ink-soft">Start with the game data, then add gear, wheels, friends to share with, and extra expenses.</span>
+  </div>
+
+
+    <div class="flex items-center gap-2">
+      <a class="text-sm text-brand-ink-soft hover:text-brand-ink" href="/hunt_sessions">Back to hunt sessions</a>
+    </div>
+</div>
+
+  </div>
+
+  <turbo-frame id="hunt_template_selector"></turbo-frame>
+
+  <turbo-frame id="hunt_session_form" target="_top">
+    <form class="ha-form" action="/hunt_sessions" accept-charset="UTF-8" method="post"><input type="hidden" name="authenticity_token" value="MOCK" autocomplete="off">
+  <input type="hidden" name="hunt_session[original_hunt_session_id]" value="">
+
+  <!-- Error Handling -->
+
+  
+<section class="ha-panel border-l-4 border-l-brand-surface-3 p-4">
+  <div class="flex flex-wrap items-baseline justify-between gap-2">
+    <h2 class="ha-panel-header flex items-center gap-2">
+      <span class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold bg-brand-surface-3 text-brand-ink-soft">
+        1
+      </span>
+      About this hunt
+      
+    </h2>
+      <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] bg-brand-surface-3 text-brand-ink-soft">
+        Optional
+      </span>
+  </div>
+  <p class="mt-1 text-xs text-brand-ink-soft">Optional to save, but not decorative: extra expenses come off the final profit and the party split. The rest is how you find and share this hunt later.</p>
+
+  <div class="mt-3">
+    
+    
+<div class="grid gap-4 md:grid-cols-2">
+  <div class="space-y-3">
+    <div>
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <label for="hunt_name" class="!mb-0">Hunt Name</label>
+          <a data-turbo-stream="true" class="text-xs text-brand-teal hover:underline" href="/templates/hunt_sessions/selections">Choose a hunt template</a>
+      </div>
+      <input id="hunt_name" placeholder="Enter hunt name" class="mt-1" type="text" name="hunt_session[hunt_name]">
+    </div>
+
+    <div>
+      <label for="hunt_description">Hunt Description</label>
+      <textarea id="hunt_description" rows="3" placeholder="Enter hunt description" class="mt-1" name="hunt_session[hunt_description]"></textarea>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <input name="hunt_session[is_public]" type="hidden" value="0" autocomplete="off"><input id="is_public" aria-describedby="is_public_help" class="ha-checkbox" type="checkbox" value="1" name="hunt_session[is_public]">
+      <label for="is_public" class="!mb-0">Make it Public</label>
+      <span class="tooltip relative inline-flex shrink-0 cursor-pointer items-center justify-center">
+        <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+        <span id="is_public_help" role="tooltip" class="tooltip-text absolute bottom-full left-1/2 z-10 mb-2 w-56 -translate-x-1/2 rounded bg-brand-ink p-2
+                     text-left text-xs normal-case tracking-normal text-brand-surface shadow-brand-lg">
+          You can share this Hunt Session with the community.
+        </span>
+      </span>
+      
+    </div>
+  </div>
+
+  <div class="space-y-3">
+    
+      <div>
+        <label class="!mb-0">Extra Expenses</label>
+        <span class="tooltip relative ml-1 inline-flex shrink-0 cursor-pointer items-center justify-center">
+          <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+          <span id="extra_expenses_help" role="tooltip" class="tooltip-text absolute bottom-full left-1/2 z-10 mb-2 w-56 -translate-x-1/2 rounded bg-brand-ink p-2
+                       text-left text-xs normal-case tracking-normal text-brand-surface shadow-brand-lg">
+            <span class="block">Use this if you spent Tibia Coins for this hunt.</span>
+            <span class="block">We will split the cost across all members in the payment distribution.</span>
+          </span>
+        </span>
+
+        <div class="mt-1 flex flex-nowrap items-end gap-3">
+          <div>
+            <label for="hunt_session_hunt_session_extra_expense_attributes_tibia_coins" class="!mb-0.5 flex items-center gap-1 !text-[11px] !font-normal !normal-case !tracking-normal !text-brand-ink">
+              Tibia Coins
+              <img class="h-3.5 w-3.5" src="">
+            </label>
+            <input aria-describedby="extra_expenses_help" class="h-9 !w-[86px]" type="number" value="0" name="hunt_session[hunt_session_extra_expense_attributes][tibia_coins]" id="hunt_session_hunt_session_extra_expense_attributes_tibia_coins">
+          </div>
+
+          <div>
+            <label for="hunt_session_hunt_session_extra_expense_attributes_tibia_coin_piece_price" class="!mb-0.5 flex items-center gap-1 !text-[11px] !font-normal !normal-case !tracking-normal !text-brand-ink">
+              Piece price
+              <i class="fas fa-coins fa-xs ha-coin"></i>
+            </label>
+            <input aria-describedby="extra_expenses_help" class="h-9 !w-[86px]" type="number" value="38000" name="hunt_session[hunt_session_extra_expense_attributes][tibia_coin_piece_price]" id="hunt_session_hunt_session_extra_expense_attributes_tibia_coin_piece_price">
+          </div>
+        </div>
+
+        <div class="mt-2">
+          <label for="hunt_session_hunt_session_extra_expense_attributes_description" class="!mb-0.5 flex items-center gap-1 !text-[11px] !font-normal !normal-case !tracking-normal !text-brand-ink">
+            Reason
+          </label>
+          <textarea rows="2" placeholder="1x EK's prey Def" name="hunt_session[hunt_session_extra_expense_attributes][description]" id="hunt_session_hunt_session_extra_expense_attributes_description"></textarea>
+        </div>
+      </div>
+
+    <div class="relative" data-controller="friends-multiselect" data-action="click@document-&gt;friends-multiselect#closeOnOutsideClick
+                  keydown-&gt;friends-multiselect#closeOnEscape
+                  focusout-&gt;friends-multiselect#closeOnFocusOut
+                  turbo:before-stream-render@document-&gt;friends-multiselect#openOnAppend">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <label id="friends_share_label" class="!mb-0">Friends to Share</label>
+    <a data-turbo-stream="true" class="inline-flex items-center gap-1 text-xs text-brand-teal hover:underline" href="/friends/new?context=hunt_session_form">
+      <i class="fa-solid fa-plus text-[10px]"></i>
+      New Friend
+</a>  </div>
+
+  <div class="mb-2 mt-1.5 hidden flex flex-wrap gap-2" data-friends-multiselect-target="tags"></div>
+
+  <template data-friends-multiselect-target="tagTemplate"></template>
+
+  <input type="text" id="friends_filter" placeholder="Type to filter friends..." aria-label="Filter friends" aria-controls="friends_list" autocomplete="off" class="mt-1" data-friends-multiselect-target="input" data-action="focus-&gt;friends-multiselect#open
+                      input-&gt;friends-multiselect#filter">
+
+  <div class="ha-dropdown absolute left-0 mt-1 hidden w-full ha-dropdown-surface" data-friends-multiselect-target="menu">
+    <ul class="max-h-56 overflow-auto p-1" id="friends_list" role="group" aria-labelledby="friends_share_label">
+    </ul>
+      <p class="px-3 py-2 text-xs text-brand-ink-soft" data-friends-multiselect-target="emptyState">No friends yet</p>
+  </div>
+</div>
+
+  </div>
+</div>
+
+
+  </div>
+</section>
+
+  
+<section class="ha-panel border-l-4 border-l-brand-ember p-4">
+  <div class="flex flex-wrap items-baseline justify-between gap-2">
+    <h2 class="ha-panel-header flex items-center gap-2">
+      <span class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold bg-brand-ember/20 text-brand-ember">
+        2
+      </span>
+      Paste the game data
+      
+    </h2>
+      <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] bg-brand-ember/15 text-brand-ember">
+        Required
+      </span>
+  </div>
+  <p class="mt-1 text-xs text-brand-ink-soft">Party Hunt or Hunt Analyser is enough to save. Input Analyser adds the damage-taken breakdown.</p>
+
+  <div class="mt-3">
+    
+    
+<div class="grid gap-3 md:grid-cols-3">
+    <div class="ha-card">
+      <div class="h-1 w-full rounded-t-xl bg-brand-teal/70"></div>
+      <div class="flex items-center justify-between gap-2 px-3 pt-2">
+        <label for="party_hunt_metadata" class="flex items-center gap-2 min-w-0">
+          <i class="fa-solid fa-user-group text-xs text-brand-teal"></i>
+          <span class="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-ink">
+            Party Hunt Metadata
+          </span>
+        </label>
+        <span class="tooltip relative inline-flex shrink-0 cursor-pointer items-center justify-center">
+          <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+          <span id="party_hunt_metadata_help" role="tooltip" class="tooltip-text absolute bottom-full right-0 z-10 mb-2 w-56 rounded bg-brand-ink p-2 text-left text-xs normal-case tracking-normal text-brand-surface shadow-brand-lg">
+            <span class="block">Copy the metadata from Tibia's "Party Hunt Analyser".</span>
+            <span class="block">See more on <a target="_blank" href="/tutorials#tutorial-creating-hunt-sessions">Tutorials</a> page.</span>
+          </span>
+        </span>
+      </div>
+      <div class="p-3 pt-2">
+        <textarea id="party_hunt_metadata" rows="5" aria-describedby="party_hunt_metadata_help" placeholder="Session data: From 2024-02-19, 16:35:59 to 2024-02-19, 17:39:48
+Session: 01:03h
+Loot Type: Leader
+Loot: 3,019,278
+Supplies: 911,660
+Balance: 2,107,618
+Elder Himanen (Leader)
+	Loot: 2,768,147
+	Supplies: 384,806
+	Balance: 2,383,341" class="block w-full rounded-md border border-brand-surface-3 bg-brand-surface-2/60 p-2
+                      font-mono text-[11px] leading-relaxed placeholder:text-brand-ink-soft/60
+                      focus:outline-none focus:ring focus:border-brand-surface-3 resize-y" name="hunt_session[party_hunt_metadata]"></textarea>
+      </div>
+    </div>
+    <div class="ha-card">
+      <div class="h-1 w-full rounded-t-xl bg-brand-gold/70"></div>
+      <div class="flex items-center justify-between gap-2 px-3 pt-2">
+        <label for="hunt_analyser_metadata" class="flex items-center gap-2 min-w-0">
+          <i class="fa-solid fa-chart-simple text-xs text-brand-gold"></i>
+          <span class="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-ink">
+            Hunt Analyser Metadata
+          </span>
+        </label>
+        <span class="tooltip relative inline-flex shrink-0 cursor-pointer items-center justify-center">
+          <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+          <span id="hunt_analyser_metadata_help" role="tooltip" class="tooltip-text absolute bottom-full right-0 z-10 mb-2 w-56 rounded bg-brand-ink p-2 text-left text-xs normal-case tracking-normal text-brand-surface shadow-brand-lg">
+            <span class="block">Copy the metadata from Tibia's "Hunting Session Analyser".</span>
+            <span class="block">See more on <a target="_blank" href="/tutorials#tutorial-creating-hunt-sessions">Tutorials</a> page.</span>
+          </span>
+        </span>
+      </div>
+      <div class="p-3 pt-2">
+        <textarea id="hunt_analyser_metadata" rows="5" aria-describedby="hunt_analyser_metadata_help" placeholder="Session data: From 2024-02-19, 16:36:01 to 2024-02-19, 17:39:40
+Session: 01:03h
+XP Gain: 11,894,872
+Loot: 253,308
+Supplies: 552,851
+Killed Monsters:
+  994x dragolisk
+Looted Items:
+  1396x a platinum coin" class="block w-full rounded-md border border-brand-surface-3 bg-brand-surface-2/60 p-2
+                      font-mono text-[11px] leading-relaxed placeholder:text-brand-ink-soft/60
+                      focus:outline-none focus:ring focus:border-brand-surface-3 resize-y" name="hunt_session[hunt_analyser_metadata]"></textarea>
+      </div>
+    </div>
+    <div class="ha-card">
+      <div class="h-1 w-full rounded-t-xl bg-brand-ember/70"></div>
+      <div class="flex items-center justify-between gap-2 px-3 pt-2">
+        <label for="input_analyser_metadata" class="flex items-center gap-2 min-w-0">
+          <i class="fa-solid fa-shield-halved text-xs text-brand-ember"></i>
+          <span class="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-ink">
+            Input Analyser Metadata
+          </span>
+        </label>
+        <span class="tooltip relative inline-flex shrink-0 cursor-pointer items-center justify-center">
+          <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+          <span id="input_analyser_metadata_help" role="tooltip" class="tooltip-text absolute bottom-full right-0 z-10 mb-2 w-56 rounded bg-brand-ink p-2 text-left text-xs normal-case tracking-normal text-brand-surface shadow-brand-lg">
+            <span class="block">Copy the metadata from Tibia's "Damage Input Analyser".</span>
+            <span class="block">See more on <a target="_blank" href="/tutorials#tutorial-creating-hunt-sessions">Tutorials</a> page.</span>
+          </span>
+        </span>
+      </div>
+      <div class="p-3 pt-2">
+        <textarea id="input_analyser_metadata" rows="5" aria-describedby="input_analyser_metadata_help" placeholder="Received Damage
+Total: 2,203,082
+Damage Types
+  Physical 818,687 (37.2%)
+  Fire 682,636 (31.0%)
+Damage Sources
+  dragolisk 840,378 (38.1%)
+  wardragon 785,707 (35.7%)" class="block w-full rounded-md border border-brand-surface-3 bg-brand-surface-2/60 p-2
+                      font-mono text-[11px] leading-relaxed placeholder:text-brand-ink-soft/60
+                      focus:outline-none focus:ring focus:border-brand-surface-3 resize-y" name="hunt_session[input_analyser_metadata]"></textarea>
+      </div>
+    </div>
+</div>
+
+
+  </div>
+</section>
+
+  
+<section class="ha-panel border-l-4 border-l-brand-teal p-4">
+  <div class="flex flex-wrap items-baseline justify-between gap-2">
+    <h2 class="ha-panel-header flex items-center gap-2">
+      <span class="flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold bg-brand-teal/20 text-brand-teal">
+        3
+      </span>
+      Your character
+      <span class="rounded-full bg-brand-teal/10 px-2 py-0.5 text-xs font-semibold text-brand-teal " data-role="selected-character-name" data-controller="selected-character-name" data-action="character-select:changedCharacterId@window-&gt;selected-character-name#update">Paladin Vesox</span>
+
+    </h2>
+      <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] bg-brand-teal/15 text-brand-teal">
+        Recommended
+      </span>
+  </div>
+  <p class="mt-1 text-xs text-brand-ink-soft">A character brings its build into this hunt. The Wheel of Destiny, Character Set, Charms and Preys below feed the damage, profit and comparison reports.</p>
+
+  <div class="mt-3">
+    
+    <turbo-frame id="hunt_session_character_field">
+  <div class="relative group" data-controller="character-select">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <label id="character_select_label" class="!mb-0">
+        Your character
+      </label>
+        <a data-turbo-stream="true" class="inline-flex items-center gap-1 text-xs text-brand-teal hover:underline" href="/characters/new?context=hunt_session_form">
+          <i class="fa-solid fa-plus text-[10px]"></i>
+          New Character
+</a>    </div>
+
+
+      <select name="hunt_session[character_id]" id="character-select" class="mt-1 w-full rounded" aria-labelledby="character_select_label" data-action="change-&gt;character-select#setCharacterId"><option value="" label=" "></option><option data-vocation="paladin" selected="selected" value="10152">Paladin Vesox</option></select>
+
+    <!-- Wheel of Destiny -->
+    <div data-controller="filterable-select-character-wod" data-filterable-select-character-wod-character-id-value="10152" data-action="character-select:changedCharacterId@window-&gt;filterable-select-character-wod#setCharacterId
+                  turbo:before-stream-render@document-&gt;filterable-select-character-wod#closeOnSelection" class="relative mt-3 rounded-lg border border-brand-surface-3 bg-brand-surface-2/40 p-3">
+
+     <div id="wod-planner-assets" hidden="" data-shim-url="/assets/wheel_of_destiny/jquery_shim-dbbd2fbf.js" data-engine-url="/assets/wheel_of_destiny/skillgrid-064cba22.js" data-glue-url="/wod-assets/18f540cf187b/wheelofdestinyplanner.min.js" data-boot-url="/assets/wheel_of_destiny/official_planner_boot-4146a0af.js" data-images-base="/wod-assets/18f540cf187b/" data-strings-url="/assets/wheel_of_destiny/SkillwheelStringsJsonLibrary-6731363e.json"></div>
+
+
+     <div class="flex flex-wrap items-center justify-between gap-2">
+       <label class="!mb-0">Wheel of Destiny (WoD)</label>
+       <a class="inline-flex items-center gap-1 text-xs text-brand-teal hover:underline" data-turbo-stream="true" data-filterable-select-character-wod-target="newWodLink" data-action="click-&gt;filterable-select-character-wod#closeDropdown" href="/characters/10152/wheels_of_destiny/new?surface=hunt_session_form">
+         <i class="fa-solid fa-plus text-[10px]"></i>
+         New WoD
+</a>     </div>
+
+     <p class="mb-1 mt-1 text-xs text-brand-ink-soft">Select the Wheel of Destiny you want to use</p>
+
+     <input type="text" placeholder="Type to filter a WoD..." aria-label="Filter Wheels of Destiny" class="filter ha-input w-full pl-3 pr-10 py-2 text-sm" data-action="focus-&gt;filterable-select-character-wod#showAll keyup-&gt;filterable-select-character-wod#filterOptions" data-filterable-select-character-wod-target="input">
+     
+
+     <div data-filterable-select-character-wod-target="dropdown" class="ha-dropdown absolute left-3 right-3 mt-2 ha-dropdown-surface hidden">
+       <div class="flex justify-end bg-brand-surface-2/80 px-4 py-2 border-b border-brand-surface-3">
+         <button type="button" data-action="click-&gt;filterable-select-character-wod#closeDropdown" class="ha-button-secondary">Cancel</button>
+       </div>
+
+       <div id="wheel_of_destiny_selection_list" style="max-height: 560px; overflow-y: auto;" class="dropdownItems flex flex-wrap p-2 mb-4 gap-4 justify-center text-sm" data-filterable-select-character-wod-target="dropdownItems">
+         <!-- WoDs will be populated here -->
+       </div>
+     </div>
+
+     <div id="wheel_of_destiny_selection" data-filterable-select-character-wod-target="selectedWod" class="">
+       
+     </div>
+</div>
+
+
+    <!-- Character Set -->
+    <div data-controller="filterable-select-character-sets" data-filterable-select-character-sets-character-id-value="10152" data-filterable-select-character-sets-surface-value="hunt_session_form" data-filterable-select-character-sets-show-hunt-session-path-template-value="/characters/__CHARACTER_ID__/character_sets/__CHARACTER_SET_ID__/hunt_sessions/show" data-action="character-select:changedCharacterId@window-&gt;filterable-select-character-sets#setCharacterId
+                  turbo:before-stream-render@document-&gt;filterable-select-character-sets#closeOnSelection" class="relative mt-3 rounded-lg border border-brand-surface-3 bg-brand-surface-2/40 p-3">
+
+     <div class="flex flex-wrap items-center justify-between gap-2">
+       <label class="!mb-0">Character Set</label>
+       <a class="inline-flex items-center gap-1 text-xs text-brand-teal hover:underline" data-turbo-stream="true" data-filterable-select-character-sets-target="newSetLink" data-action="click-&gt;filterable-select-character-sets#closeDropdown" href="/characters/10152/character_sets/new?surface=hunt_session_form">
+         <i class="fa-solid fa-plus text-[10px]"></i>
+         New Set
+</a>     </div>
+
+     <p class="mb-1 mt-1 text-xs text-brand-ink-soft">Select the Character Set you want to use</p>
+
+     <input type="text" placeholder="Type to filter a Character Set..." aria-label="Filter Character Sets" class="filter ha-input w-full pl-3 pr-10 py-2 text-sm" data-action="focus-&gt;filterable-select-character-sets#showAll
+                         keyup-&gt;filterable-select-character-sets#filterOptions" data-filterable-select-character-sets-target="input">
+     
+
+     <div data-filterable-select-character-sets-target="dropdown" class="ha-dropdown absolute left-3 right-3 mt-2 ha-dropdown-surface hidden">
+       <div class="flex justify-end bg-brand-surface-2/80 px-4 py-2 border-b border-brand-surface-3">
+         <button type="button" data-action="click-&gt;filterable-select-character-sets#closeDropdown" class="ha-button-secondary">Cancel</button>
+       </div>
+
+       <div id="character_set_selection_list" style="max-height: 560px; overflow-y: auto;" class="dropdownItems flex flex-wrap p-4 mb-4 justify-center" data-filterable-select-character-sets-target="dropdownItems">
+       </div>
+     </div>
+
+     <div data-filterable-select-character-sets-target="selectedItems" class="selectedItems relative overflow-x-auto">
+     </div>
+
+     <div id="character_set_selection" data-filterable-select-character-sets-target="selectedSet" class="">
+       <div id="slot_picker_anchor_character_item_form_hunt_session_panel" data-slot-picker-character-id="10152" class="relative group" data-controller="character-item-select" data-character-item-select-character-id-value="10152" data-character-item-select-character-set-id-value="" data-character-item-select-form-id-value="character_item_form_hunt_session_panel" data-character-item-select-configuration-frame-id-value="character_item_configuration_character_item_form_hunt_session_panel" data-action="character-select:changedCharacterId@window-&gt;character-item-select#setCharacterId
+                  turbo:submit-end@document-&gt;character-item-select#disableSaveOnFailedSubmit
+                  turbo:frame-load-&gt;character-item-select#enableSaveItem">
+
+  <div class="relative group">
+    <div id="select_item_modal_hunt_session_panel" data-character-item-select-target="modal" class="flex modal hidden fixed inset-0 bg-black/60 items-center justify-center z-[10010]">
+  <div class="modal-content ha-menu-card p-0 w-full max-w-2xl mx-4 flex flex-col max-h-[85vh] overflow-hidden">
+    <div class="p-4 border-b border-brand-surface-3 flex items-center justify-between">
+      <span class="font-display font-semibold text-brand-ink text-lg">Select an Item</span>
+      <button type="button" class="text-brand-ink-soft hover:text-brand-ink text-lg leading-none" aria-label="Close" data-action="click-&gt;character-item-select#modalClose">×</button>
+    </div>
+
+    <div class="p-4 border-b border-brand-surface-3">
+      <div class="hidden mb-3" data-character-item-select-target="ammunitionFilter"></div>
+
+      <div class="flex flex-wrap items-center gap-2" data-character-item-select-target="pillsRow">
+        <label class="cursor-pointer">
+          <input type="radio" name="select_item_modal_hunt_session_panel_pill" id="select_item_modal_hunt_session_panel_pill_my_items" value="my_items" class="sr-only peer" autocomplete="off" data-character-item-select-target="myItemsPill" data-action="change-&gt;character-item-select#selectPill" checked="checked">
+          <span class="px-2 py-1 flex items-center gap-2 transition ha-button-secondary peer-checked:ha-button-secondary-peer-checked">
+            My items (<span data-character-item-select-target="myItemsCount">0</span>)
+          </span>
+        </label>
+        <label class="cursor-pointer">
+          <input type="radio" name="select_item_modal_hunt_session_panel_pill" id="select_item_modal_hunt_session_panel_pill_all_items" value="all_items" class="sr-only peer" autocomplete="off" data-character-item-select-target="allItemsPill" data-action="change-&gt;character-item-select#selectPill">
+          <span class="px-2 py-1 flex items-center gap-2 transition ha-button-secondary peer-checked:ha-button-secondary-peer-checked">
+            All items
+          </span>
+        </label>
+      </div>
+
+      <input type="text" class="ha-input w-full mt-2" placeholder="Type to filter items..." data-character-item-select-target="searchInput" data-action="input-&gt;character-item-select#filterItems keydown-&gt;character-item-select#preventEnterSubmit">
+
+      <input type="text" class="ha-input w-full mt-2 hidden" placeholder="Search the item catalog..." data-character-item-select-target="catalogSearchInput" data-action="input-&gt;character-item-select#searchCatalog keydown-&gt;character-item-select#preventEnterSubmit">
+    </div>
+
+    <div class="p-4 flex-1 flex flex-col min-h-0 gap-3">
+      <div class="hidden rounded bg-amber-500/15 ha-text-warning text-sm px-3 py-2 mb-2" role="alert" data-character-item-select-target="alreadyInSlotMessage"></div>
+
+      <span class="hidden" data-character-item-select-target="genericAlreadyInSlotMessage">
+        This item is already in another slot.
+      </span>
+
+      <div data-character-item-select-target="myItemsPane" class="flex-1 min-h-[120px] overflow-y-auto overscroll-contain border border-brand-surface-3 rounded">
+        <div data-character-item-select-target="dropdownItems">
+        </div>
+      </div>
+
+      <div class="hidden flex-1 flex flex-col min-h-0 gap-3" data-character-item-select-target="allItemsPane">
+        <div data-character-item-select-target="catalogItems" data-action="scroll-&gt;character-item-select#catalogScroll" class="flex-1 min-h-[96px] max-h-[180px] overflow-y-auto overscroll-contain border border-brand-surface-3 rounded">
+        </div>
+
+        <div data-character-item-select-target="catalogConfigFrame" class="flex-1 min-h-[96px] overflow-y-auto overscroll-contain border border-brand-surface-3 rounded p-2">
+          <turbo-frame id="character_item_configuration_character_item_form_hunt_session_panel">
+    <p class="ha-text-muted text-sm p-4">Choose an item above to configure it.</p>
+
+</turbo-frame>
+        </div>
+
+        <input type="hidden" name="surface" id="surface" value="slot_picker" form="character_item_form_hunt_session_panel" autocomplete="off">
+        <input type="hidden" name="slot" id="slot" form="character_item_form_hunt_session_panel" data-character-item-select-target="slotField" autocomplete="off">
+        <input type="hidden" name="form_id" id="form_id" value="character_item_form_hunt_session_panel" form="character_item_form_hunt_session_panel" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="p-4 border-t border-brand-surface-3 flex items-center justify-between gap-2">
+      <span class="min-w-0 truncate text-sm text-brand-ink-soft">
+        <span data-character-item-select-target="footerMyItemsStatus">
+          My items (<span data-character-item-select-target="footerMyItemsCount">0</span>)
+        </span>
+        <span class="hidden" data-character-item-select-target="footerAllItemsPrompt">
+          Pick an item to save it here.
+        </span>
+        <span class="hidden" data-character-item-select-target="footerAllItemsItemName"></span>
+      </span>
+      <div class="flex gap-2 shrink-0">
+        <button type="button" data-action="click-&gt;character-item-select#modalClose" class="ha-button-secondary">Cancel</button>
+        <button type="submit" form="character_item_form_hunt_session_panel" class="ha-button hidden" disabled="" data-character-item-select-target="saveButton">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+    <div class="mt-2 mb-8 p-1 bg-white dark:bg-gray-800 ha-text rounded-lg shadow-md border-2
+                border-brand-surface-3 ">
+      <div class="w-full flex flex-wrap mt-8 mb-4 border-b justify-center" data-item-id="">
+  <div class="">
+    <div class="grid grid-cols-3 gap-1 w-40 h-52">
+      <div id="square-amulet">
+        
+<div class="relative group/slot flex justify-center items-center rounded-md bg-gray-300
+            h-12 w-12 
+          cursor-pointer" data-item-slot="amulet" data-action="click-&gt;character-item-select#modalOpen">
+     <img alt="" class="w-8 h-8 opacity-40" data-character-item-select-target="amuletSlot" src="">
+</div>
+
+      </div>
+      <div id="square-helmet">
+        
+<div class="relative group/slot flex justify-center items-center rounded-md bg-gray-300
+            h-12 w-12 -mt-4
+          cursor-pointer" data-item-slot="helmet" data-action="click-&gt;character-item-select#modalOpen">
+     <img alt="" class="w-8 h-8 opacity-40" data-character-item-select-target="helmetSlot" src="">
+</div>
+
+      </div>
+        <div class="flex justify-center items-center rounded-md h-12 w-12"></div>
+
+      <div id="square-left_hand">
+        
+<div class="relative group/slot flex justify-center items-center rounded-md bg-gray-300
+            h-12 w-12 
+          cursor-pointer" data-item-slot="left_hand" data-action="click-&gt;character-item-select#modalOpen">
+     <img alt="" class="w-8 h-8 opacity-40" data-character-item-select-target="leftHandSlot" src="">
+</div>
+
+      </div>
+      <div id="square-armor">
+        
+<div class="relative group/slot flex justify-center items-center rounded-md bg-gray-300
+            h-12 w-12 -mt-4
+          cursor-pointer" data-item-slot="armor" data-action="click-&gt;character-item-select#modalOpen">
+     <img alt="" class="w-8 h-8 opacity-40" data-character-item-select-target="armorSlot" src="">
+</div>
+
+      </div>
+      <div id="square-right_hand">
+        
+<div class="relative group/slot flex justify-center items-center rounded-md bg-gray-300
+            h-12 w-12 
+          cursor-pointer" data-item-slot="right_hand" data-action="click-&gt;character-item-select#modalOpen">
+     <img alt="" class="w-8 h-8 opacity-40" data-character-item-select-target="rightHandSlot" src="">
+</div>
+
+      </div>
+
+      <div id="square-ring">
+        
+<div class="relative group/slot flex justify-center items-center rounded-md bg-gray-300
+            h-12 w-12 
+          cursor-pointer" data-item-slot="ring" data-action="click-&gt;character-item-select#modalOpen">
+     <img alt="" class="w-8 h-8 opacity-40" data-character-item-select-target="ringSlot" src="">
+</div>
+
+      </div>
+      <div id="square-legs">
+        
+<div class="relative group/slot flex justify-center items-center rounded-md bg-gray-300
+            h-12 w-12 -mt-4
+          cursor-pointer" data-item-slot="legs" data-action="click-&gt;character-item-select#modalOpen">
+     <img alt="" class="w-8 h-8 opacity-40" data-character-item-select-target="legsSlot" src="">
+</div>
+
+      </div>
+      <div id="square-extra_slot">
+        
+<div class="relative group/slot flex justify-center items-center rounded-md bg-gray-300
+            h-12 w-12 
+          cursor-pointer" data-item-slot="extra_slot" data-action="click-&gt;character-item-select#modalOpen">
+     <img alt="" class="w-8 h-8 opacity-40" data-character-item-select-target="extraSlotSlot" src="">
+</div>
+
+      </div>
+
+      <div class="flex justify-center items-center rounded-md h-12 w-12"></div>
+      <div id="square-boots">
+        
+<div class="relative group/slot flex justify-center items-center rounded-md bg-gray-300
+            h-12 w-12 -mt-4
+          cursor-pointer" data-item-slot="boots" data-action="click-&gt;character-item-select#modalOpen">
+     <img alt="" class="w-8 h-8 opacity-40" data-character-item-select-target="bootsSlot" src="">
+</div>
+
+      </div>
+      <div class="flex justify-center items-center rounded-md h-12 w-12"></div>
+    </div>
+
+    <div class="mt-2 mb-2">
+      <span class="block text-xs font-medium ha-text-muted text-center mb-2">Consumables</span>
+      <div class="grid grid-cols-3 gap-1 justify-center" data-character-item-select-target="consumableSlotsContainer">
+        <div id="square-consumable_1" data-extra-consumable-slot="false">
+          
+<div class="relative group/slot flex justify-center items-center rounded-md bg-gray-300
+            h-12 w-12 
+          cursor-pointer" data-item-slot="consumable_1" data-action="click-&gt;character-item-select#modalOpen">
+     <img alt="" class="w-8 h-8 opacity-40" data-character-item-select-target="consumable1Slot" src="">
+</div>
+
+        </div>
+        <div id="square-consumable_2" data-extra-consumable-slot="false">
+          
+<div class="relative group/slot flex justify-center items-center rounded-md bg-gray-300
+            h-12 w-12 
+          cursor-pointer" data-item-slot="consumable_2" data-action="click-&gt;character-item-select#modalOpen">
+     <img alt="" class="w-8 h-8 opacity-40" data-character-item-select-target="consumable2Slot" src="">
+</div>
+
+        </div>
+          <button type="button" id="add-consumable-slot" data-action="click-&gt;character-item-select#addConsumableSlot" class="h-12 w-12 rounded-md border border-brand-surface-3 bg-gray-100 hover:bg-gray-200 text-lg font-bold leading-none">
+            +
+          </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ml-1 mr-1 mt-2" data-character-item-select-target="bonusesAndProtections">
+    <div class="mb-4 text-sm text-center ha-text-muted">
+  Equipment only: base skills, Loyalty, Wheel of Destiny and Stances are not included.
+</div>
+
+  <div class="flex flex-wrap gap-4 justify-center mt-2 mb-2">
+    
+<div data-stats-sheet="character-set" data-controller="scroll-more" data-scroll-more-more-label-value="More" data-scroll-more-back-label-value="Back to top" class="w-2/3 md:w-1/2 lg:w-1/3 min-w-[350px] ha-panel flex h-[560px] flex-col overflow-hidden">
+  <div class="min-h-0 flex-1 overflow-auto p-3" data-scroll-more-target="scroller" data-action="scroll-&gt;scroll-more#update">
+    <h2 class="!text-[13px] !font-sans !font-bold text-center uppercase tracking-wide mb-3">Combat Stats</h2>
+    
+        <div data-combat-stat-group="attack" class="text-[11px] font-bold uppercase tracking-wide text-brand-ink-soft mt-4 mb-1 pb-1
+                    border-b border-brand-surface-3 first:mt-0">Attack</div>
+
+          <div class="mb-3 last:mb-0" data-combat-stat-line="Critical Hit Chance">
+            <div class="flex justify-between">
+              <span>
+                Critical Hit Chance:
+              </span>
+                <span class="font-bold" data-stat="Critical Hit Chance">+5%</span>
+            </div>
+
+              <div class="text-[11px] text-brand-ink-soft pl-2" data-provenance="">
+                +5% from Flat Bonus
+              </div>
+
+
+
+          </div>
+          <div class="mb-3 last:mb-0" data-combat-stat-line="Critical Extra Damage">
+            <div class="flex justify-between">
+              <span>
+                Critical Extra Damage:
+              </span>
+                <span class="font-bold" data-stat="Critical Extra Damage">+10%</span>
+            </div>
+
+              <div class="text-[11px] text-brand-ink-soft pl-2" data-provenance="">
+                +10% from Flat Bonus
+              </div>
+
+
+
+          </div>
+
+
+  </div>
+
+  <button type="button" class="hidden flex flex-none items-center justify-center gap-2 border-t border-brand-surface-3
+                 bg-brand-surface-2 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide
+                 ha-text-muted transition hover:bg-brand-surface-3/60 hover:ha-text" data-scroll-more-target="more" data-action="click-&gt;scroll-more#jump">
+    <span data-scroll-more-target="label">Back to top</span>
+    <i class="fas fa-chevron-down text-[10px] transition-transform rotate-180" data-scroll-more-target="chevron"></i>
+  </button>
+</div>
+  </div>
+
+
+
+
+  </div>
+</div>
+
+
+      <div data-character-item-select-target="selectedItems" data-slot-picker-details-container="" class="mb-4 mt-2">
+
+</div>
+
+    </div>
+  </div>
+</div>
+
+
+
+     </div>
+</div>
+
+  </div>
+</turbo-frame>
+
+<div class="relative mt-3 rounded-lg border border-brand-surface-3 bg-brand-surface-2/40 p-3" data-controller="hunt-session-charms tab-switcher" data-action="character-select:changedCharacterId@window-&gt;hunt-session-charms#setCharacterId">
+  <div class="flex items-center justify-between gap-4">
+    <div>
+      <label class="block text-sm font-medium ha-text-muted">Charms</label>
+      <p class="text-xs text-brand-ink-soft">Select the Major and Minor charms used for this hunt.</p>
+    </div>
+
+    <div class="flex items-center gap-2 rounded-full border border-brand-surface-3 bg-brand-surface-2/80 p-1">
+      <button type="button" class="rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] bg-brand-ink text-brand-surface" data-tab-switcher-target="tab" data-action="tab-switcher#select">
+        Majors
+      </button>
+      <button type="button" class="rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-brand-ink-soft" data-tab-switcher-target="tab" data-action="tab-switcher#select">
+        Minors
+      </button>
+    </div>
+  </div>
+
+  <div class="mt-4" data-tab-switcher-target="panel">
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-2">
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="major" data-charm-name="Carnage">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][3][_destroy]" id="hunt_session_hunt_session_charms_attributes_3__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][3][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_3_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][3][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_3_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Carnage" src="">
+      <span class="ha-charm-name">Carnage</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Carnage</strong><br>
+        Killing a monster has 10% / 20% / 22% chance to deal Physical Damage equal to 15% of its maximum health to all monsters in a small radius.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_3_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][3][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/3/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="7" data-activation-percentage="10.0">
+        10%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="8" data-activation-percentage="20.0">
+        20%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="9" data-activation-percentage="22.0">
+        22%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="major" data-charm-name="Curse">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][6][_destroy]" id="hunt_session_hunt_session_charms_attributes_6__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][6][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_6_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][6][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_6_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Curse" src="">
+      <span class="ha-charm-name">Curse</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Curse</strong><br>
+        Each attack on a creature has a 5% / 10% / 11% chance to trigger and deal 5% of its maximum Hit Points as Death Damage once.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_6_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][6][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/6/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="16" data-activation-percentage="5.0">
+        5%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="17" data-activation-percentage="10.0">
+        10%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="18" data-activation-percentage="11.0">
+        11%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="major" data-charm-name="Divine Wrath">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][7][_destroy]" id="hunt_session_hunt_session_charms_attributes_7__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][7][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_7_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][7][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_7_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Divine Wrath" src="">
+      <span class="ha-charm-name">Divine Wrath</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Divine Wrath</strong><br>
+        Each attack on a creature has a 5% / 10% / 11% chance to trigger and deal 5% of its maximum Hit Points as Holy Damage once.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_7_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][7][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/7/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="19" data-activation-percentage="5.0">
+        5%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="20" data-activation-percentage="10.0">
+        10%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="21" data-activation-percentage="11.0">
+        11%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="major" data-charm-name="Dodge">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][8][_destroy]" id="hunt_session_hunt_session_charms_attributes_8__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][8][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_8_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][8][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_8_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Dodge" src="">
+      <span class="ha-charm-name">Dodge</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Dodge</strong><br>
+        Dodges an attack with a 5% / 10% / 11% chance, taking no damage at all.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_8_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][8][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/8/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="22" data-activation-percentage="5.0">
+        5%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="23" data-activation-percentage="10.0">
+        10%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="24" data-activation-percentage="11.0">
+        11%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="major" data-charm-name="Enflame">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][9][_destroy]" id="hunt_session_hunt_session_charms_attributes_9__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][9][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_9_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][9][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_9_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Enflame" src="">
+      <span class="ha-charm-name">Enflame</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Enflame</strong><br>
+        Each attack on a creature has a 5% / 10% / 11% chance to trigger and deal 5% of its maximum Hit Points as Fire Damage once.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_9_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][9][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/9/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="25" data-activation-percentage="5.0">
+        5%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="26" data-activation-percentage="10.0">
+        10%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="27" data-activation-percentage="11.0">
+        11%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="major" data-charm-name="Freeze">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][11][_destroy]" id="hunt_session_hunt_session_charms_attributes_11__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][11][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_11_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][11][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_11_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Freeze" src="">
+      <span class="ha-charm-name">Freeze</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Freeze</strong><br>
+        Each attack on a creature has a 5% / 10% / 11% chance to trigger and deal 5% of its maximum Hit Points as Ice Damage once.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_11_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][11][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/11/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="31" data-activation-percentage="5.0">
+        5%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="32" data-activation-percentage="10.0">
+        10%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="33" data-activation-percentage="11.0">
+        11%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="major" data-charm-name="Low Blow">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][13][_destroy]" id="hunt_session_hunt_session_charms_attributes_13__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][13][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_13_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][13][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_13_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Low Blow" src="">
+      <span class="ha-charm-name">Low Blow</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Low Blow</strong><br>
+        Adds 4% / 8% / 9% critical hit chance to attacks with critical hit weapons.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_13_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][13][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/13/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="37" data-activation-percentage="">
+        4%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="38" data-activation-percentage="">
+        8%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="39" data-activation-percentage="">
+        9%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="major" data-charm-name="Overflux">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][15][_destroy]" id="hunt_session_hunt_session_charms_attributes_15__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][15][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_15_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][15][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_15_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Overflux" src="">
+      <span class="ha-charm-name">Overflux</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Overflux</strong><br>
+        Each attack has a 5% / 10% / 11% chance to deal Physical Damage equal to 2.5% of your maximum mana.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_15_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][15][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/15/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="43" data-activation-percentage="5.0">
+        5%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="44" data-activation-percentage="10.0">
+        10%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="45" data-activation-percentage="11.0">
+        11%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="major" data-charm-name="Overpower">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][16][_destroy]" id="hunt_session_hunt_session_charms_attributes_16__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][16][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_16_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][16][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_16_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Overpower" src="">
+      <span class="ha-charm-name">Overpower</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Overpower</strong><br>
+        Each attack has a 5% / 10% / 11% chance to deal Physical Damage equal to 5% of your maximum health.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_16_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][16][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/16/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="46" data-activation-percentage="5.0">
+        5%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="47" data-activation-percentage="10.0">
+        10%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="48" data-activation-percentage="11.0">
+        11%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="major" data-charm-name="Parry">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][17][_destroy]" id="hunt_session_hunt_session_charms_attributes_17__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][17][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_17_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][17][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_17_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Parry" src="">
+      <span class="ha-charm-name">Parry</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Parry</strong><br>
+        Any damage taken has a 5% / 10% / 11% chance to be reflected to the aggressor as Physical Damage.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_17_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][17][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/17/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="49" data-activation-percentage="5.0">
+        5%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="50" data-activation-percentage="10.0">
+        10%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="51" data-activation-percentage="11.0">
+        11%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="major" data-charm-name="Poison">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][18][_destroy]" id="hunt_session_hunt_session_charms_attributes_18__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][18][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_18_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][18][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_18_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Poison" src="">
+      <span class="ha-charm-name">Poison</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Poison</strong><br>
+        Each attack on a creature has a 5% / 10% / 11% chance to trigger and deal 5% of its maximum Hit Points as Earth Damage once.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_18_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][18][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/18/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="52" data-activation-percentage="5.0">
+        5%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="53" data-activation-percentage="10.0">
+        10%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="54" data-activation-percentage="11.0">
+        11%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="major" data-charm-name="Savage Blow">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][19][_destroy]" id="hunt_session_hunt_session_charms_attributes_19__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][19][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_19_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][19][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_19_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Savage Blow" src="">
+      <span class="ha-charm-name">Savage Blow</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Savage Blow</strong><br>
+        Adds 20% / 40% / 44% critical extra damage to attacks with Critical Hit weapons.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_19_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][19][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/19/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="55" data-activation-percentage="">
+        20%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="56" data-activation-percentage="">
+        40%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="57" data-activation-percentage="">
+        44%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="major" data-charm-name="Wound">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][24][_destroy]" id="hunt_session_hunt_session_charms_attributes_24__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][24][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_24_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][24][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_24_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Wound" src="">
+      <span class="ha-charm-name">Wound</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Wound</strong><br>
+        Each attack on a creature has a 5% / 10% / 11% chance to trigger and deal 5% of its maximum Hit Points as Physical Damage once.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_24_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][24][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/24/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="70" data-activation-percentage="5.0">
+        5%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="71" data-activation-percentage="10.0">
+        10%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="72" data-activation-percentage="11.0">
+        11%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="major" data-charm-name="Zap">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][25][_destroy]" id="hunt_session_hunt_session_charms_attributes_25__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][25][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_25_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][25][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_25_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Zap" src="">
+      <span class="ha-charm-name">Zap</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Zap</strong><br>
+        Each attack on a creature has a 5% / 10% / 11% chance to trigger and deal 5% of its maximum Hit Points as Energy Damage once.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_25_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][25][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/25/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="73" data-activation-percentage="5.0">
+        5%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="74" data-activation-percentage="10.0">
+        10%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="75" data-activation-percentage="11.0">
+        11%
+      </button>
+  </div>
+
+</div>
+
+    </div>
+  </div>
+
+  <div class="mt-4 hidden" data-tab-switcher-target="panel">
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] gap-2">
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="minor" data-charm-name="Adrenaline Burst">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][1][_destroy]" id="hunt_session_hunt_session_charms_attributes_1__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][1][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_1_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][1][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_1_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Adrenaline Burst" src="">
+      <span class="ha-charm-name">Adrenaline Burst</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Adrenaline Burst</strong><br>
+        Bursts of adrenaline enhance your reflexes with a 6% / 9% / 12% chance after getting hit and lets you move faster for 10 seconds.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_1_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][1][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/1/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="1" data-activation-percentage="6.0">
+        6%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="2" data-activation-percentage="9.0">
+        9%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="3" data-activation-percentage="12.0">
+        12%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="minor" data-charm-name="Bless">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][2][_destroy]" id="hunt_session_hunt_session_charms_attributes_2__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][2][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_2_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][2][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_2_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Bless" src="">
+      <span class="ha-charm-name">Bless</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Bless</strong><br>
+        Blesses you and reduces skill and XP loss by 6% / 9% / 12% when killed by the chosen creature.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_2_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][2][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/2/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="4" data-activation-percentage="">
+        6%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="5" data-activation-percentage="">
+        9%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="6" data-activation-percentage="">
+        12%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="minor" data-charm-name="Cleanse">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][4][_destroy]" id="hunt_session_hunt_session_charms_attributes_4__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][4][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_4_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][4][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_4_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Cleanse" src="">
+      <span class="ha-charm-name">Cleanse</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Cleanse</strong><br>
+        Cleanses you from within with a 6% / 9% / 12% chance after you get hit and removes one random active negative status effect and temporarily makes you immune against it.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_4_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][4][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/4/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="10" data-activation-percentage="6.0">
+        6%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="11" data-activation-percentage="9.0">
+        9%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="12" data-activation-percentage="12.0">
+        12%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="minor" data-charm-name="Cripple">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][5][_destroy]" id="hunt_session_hunt_session_charms_attributes_5__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][5][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_5_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][5][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_5_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Cripple" src="">
+      <span class="ha-charm-name">Cripple</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Cripple</strong><br>
+        Cripples the creature with a 6% / 9% / 12% chance and paralyses it for 10 seconds.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_5_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][5][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/5/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="13" data-activation-percentage="6.0">
+        6%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="14" data-activation-percentage="9.0">
+        9%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="15" data-activation-percentage="12.0">
+        12%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="minor" data-charm-name="Fatal Hold">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][10][_destroy]" id="hunt_session_hunt_session_charms_attributes_10__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][10][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_10_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][10][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_10_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Fatal Hold" src="">
+      <span class="ha-charm-name">Fatal Hold</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Fatal Hold</strong><br>
+        Your attacks have a 30% chance to prevent creatures from fleeing due to low health for 30 seconds.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_10_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][10][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/10/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="28" data-activation-percentage="30.0">
+        30%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="29" data-activation-percentage="45.0">
+        45%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="30" data-activation-percentage="60.0">
+        60%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="minor" data-charm-name="Gut">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][12][_destroy]" id="hunt_session_hunt_session_charms_attributes_12__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][12][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_12_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][12][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_12_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Gut" src="">
+      <span class="ha-charm-name">Gut</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Gut</strong><br>
+        Gutting the creature yields 6% / 9% / 12% more creature products.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_12_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][12][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/12/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="34" data-activation-percentage="">
+        6%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="35" data-activation-percentage="">
+        9%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="36" data-activation-percentage="">
+        12%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="minor" data-charm-name="Numb">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][14][_destroy]" id="hunt_session_hunt_session_charms_attributes_14__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][14][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_14_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][14][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_14_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Numb" src="">
+      <span class="ha-charm-name">Numb</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Numb</strong><br>
+        Numbs the creature with a 6% / 9% / 12% chance after its attack and paralyses the creature for 10 seconds.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_14_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][14][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/14/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="40" data-activation-percentage="6.0">
+        6%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="41" data-activation-percentage="9.0">
+        9%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="42" data-activation-percentage="12.0">
+        12%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="minor" data-charm-name="Scavenge">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][20][_destroy]" id="hunt_session_hunt_session_charms_attributes_20__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][20][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_20_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][20][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_20_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Scavenge" src="">
+      <span class="ha-charm-name">Scavenge</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Scavenge</strong><br>
+        Enhances your chances to successfully skin/dust a skinnable/dustable creature by 60% / 90% / 120%.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_20_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][20][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/20/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="58" data-activation-percentage="60.0">
+        60%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="59" data-activation-percentage="90.0">
+        90%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="60" data-activation-percentage="120.0">
+        120%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="minor" data-charm-name="Vampiric Embrace">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][21][_destroy]" id="hunt_session_hunt_session_charms_attributes_21__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][21][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_21_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][21][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_21_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Vampiric Embrace" src="">
+      <span class="ha-charm-name">Vampiric Embrace</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Vampiric Embrace</strong><br>
+        Adds 1.6% / 2.4% / 3.2% Life Leech to attacks if wearing equipment that provides life leech.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_21_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][21][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/21/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="61" data-activation-percentage="">
+        1.6%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="62" data-activation-percentage="">
+        2.4%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="63" data-activation-percentage="">
+        3.2%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="minor" data-charm-name="Void Inversion">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][22][_destroy]" id="hunt_session_hunt_session_charms_attributes_22__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][22][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_22_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][22][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_22_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Void Inversion" src="">
+      <span class="ha-charm-name">Void Inversion</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Void Inversion</strong><br>
+        20% / 30% /40% chance to gain mana instead of losing it when taking Mana Drain damage.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_22_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][22][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/22/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="64" data-activation-percentage="20.0">
+        20%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="65" data-activation-percentage="30.0">
+        30%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="66" data-activation-percentage="40.0">
+        40%
+      </button>
+  </div>
+
+</div>
+
+        
+          
+<div class="ha-charm-card" data-hunt-session-charms-target="card" data-charm-type="minor" data-charm-name="Void's Call">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_charms_attributes][23][_destroy]" id="hunt_session_hunt_session_charms_attributes_23__destroy">
+  <input autocomplete="off" data-role="charm-level-id" type="hidden" name="hunt_session[hunt_session_charms_attributes][23][charm_level_id]" id="hunt_session_hunt_session_charms_attributes_23_charm_level_id">
+  <input autocomplete="off" data-role="activation-input" type="hidden" name="hunt_session[hunt_session_charms_attributes][23][activation_percentage]" id="hunt_session_hunt_session_charms_attributes_23_activation_percentage">
+
+  <div class="ha-charm-card-header">
+    <div class="ha-charm-card-title">
+      <img class="ha-charm-icon" alt="Void's Call" src="">
+      <span class="ha-charm-name">Void's Call</span>
+    </div>
+
+    <span class="tooltip relative inline-flex items-center justify-center">
+      <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+      <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+        <strong>Void's Call</strong><br>
+        Adds 0.8% / 1.2% / 1.6% Mana Leech to attacks if wearing equipment that provides mana leech.
+      </span>
+    </span>
+  </div>
+
+  <div id="charm_23_creature_slot" class="ha-charm-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_charms_attributes][23][creature_id]" value="">
+
+  <div class="ha-charm-creature-frame">
+    <a href="/hunt_sessions/charms/23/creatures" class="ha-charm-creature-button" data-turbo-stream="" data-action="click-&gt;hunt-session-charms#openCreaturePicker">
+      <div class="ha-charm-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+          <img class="hidden h-8 w-8 object-contain" alt="">
+      </div>
+    </a>
+
+      <span class="ha-charm-clear is-hidden"></span>
+  </div>
+
+  <p class="ha-charm-creature-name">Select creature</p>
+</div>
+
+
+  <div class="ha-charm-levels">
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="67" data-activation-percentage="">
+        0.8%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="68" data-activation-percentage="">
+        1.2%
+      </button>
+
+      <button type="button" class="ha-level-pill " data-action="click-&gt;hunt-session-charms#selectLevel" data-level-id="69" data-activation-percentage="">
+        1.6%
+      </button>
+  </div>
+
+</div>
+
+    </div>
+  </div>
+
+  <div id="charm_creature_modal"></div>
+</div>
+
+
+
+<div class="relative mt-3 rounded-lg border border-brand-surface-3 bg-brand-surface-2/40 p-3" data-controller="hunt-session-preys" data-action="character-select:changedCharacterId@window-&gt;hunt-session-preys#setCharacterId">
+  <div>
+    <label class="block text-sm font-medium ha-text-muted">Preys</label>
+    <p class="text-xs text-brand-ink-soft">Select the preys used for this hunt.</p>
+  </div>
+
+  <div class="mt-4">
+    <div class="flex flex-wrap gap-1.5 justify-start">
+        
+          
+<div class="ha-prey-card" data-hunt-session-preys-target="card" data-prey-slot-index="0" data-base-percentage="" data-percentage-increment="">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_preys_attributes][0][_destroy]" id="hunt_session_hunt_session_preys_attributes_0__destroy">
+  <input autocomplete="off" data-role="prey-id" type="hidden" name="hunt_session[hunt_session_preys_attributes][0][prey_id]" id="hunt_session_hunt_session_preys_attributes_0_prey_id">
+  <input autocomplete="off" data-role="prey-level" type="hidden" name="hunt_session[hunt_session_preys_attributes][0][prey_level]" id="hunt_session_hunt_session_preys_attributes_0_prey_level">
+
+  <div class="ha-prey-card-icon shrink-0 pt-0.5">
+    <div class="ha-prey-icon-frame">
+      <button type="button" class="ha-prey-icon-button is-empty" data-role="prey-icon-button" data-action="click-&gt;hunt-session-preys#openPreyTypeModal">
+        <span class="text-base font-semibold leading-none text-brand-ink-soft " data-role="prey-placeholder">+</span>
+        <img class="h-full w-full object-contain hidden" alt="" data-role="prey-icon" src="">
+      </button>
+
+      <button type="button" class="ha-prey-clear is-hidden" data-role="prey-clear" aria-label="Clear prey" data-action="click-&gt;hunt-session-preys#clearPreyType">
+        x
+      </button>
+    </div>
+  </div>
+
+  <div class="ha-prey-card-body min-w-0 flex-1 flex flex-col gap-1.5 ml-1.5">
+    <div class="flex items-center gap-2">
+      <span class="text-sm font-semibold text-brand-ink truncate" data-role="prey-name">
+        Select prey
+      </span>
+      <span class="tooltip relative inline-flex items-center justify-center hidden" data-role="prey-tooltip">
+        <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+        <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10" data-role="prey-tooltip-text">
+          
+        </span>
+      </span>
+    </div>
+
+    <div class="flex items-start gap-3">
+      <div class="ha-prey-stars">
+          <div class="flex gap-0.5">
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="1" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="2" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="3" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="4" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="5" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+          </div>
+          <div class="flex gap-0.5">
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="6" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="7" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="8" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="9" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="10" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+          </div>
+      </div>
+
+      <div class="ha-prey-bonus-block flex flex-col items-start" data-role="prey-bonus-block">
+        <span class="text-[11px] font-semibold uppercase tracking-wide text-brand-ink-soft">Bonus</span>
+        <span class="text-xs font-semibold text-brand-ink" data-role="prey-bonus-value"></span>
+      </div>
+    </div>
+
+    <div data-role="prey-creature-wrapper">
+      <div id="prey_0_creature_slot" class="ha-prey-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_preys_attributes][0][creature_id]" value="" data-role="creature-id">
+
+  <div class="ha-prey-creature-frame">
+    <button type="button" class="ha-prey-creature-button" disabled="" data-role="prey-creature-button" data-slot-index="0" data-action="click-&gt;hunt-session-preys#openCreatureModal">
+      <div class="ha-prey-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+      </div>
+    </button>
+
+      <span class="ha-prey-clear is-hidden" data-role="creature-clear"></span>
+  </div>
+
+  <p class="ha-prey-creature-name">Select creature</p>
+</div>
+
+    </div>
+
+  </div>
+</div>
+
+        
+          
+<div class="ha-prey-card" data-hunt-session-preys-target="card" data-prey-slot-index="1" data-base-percentage="" data-percentage-increment="">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_preys_attributes][1][_destroy]" id="hunt_session_hunt_session_preys_attributes_1__destroy">
+  <input autocomplete="off" data-role="prey-id" type="hidden" name="hunt_session[hunt_session_preys_attributes][1][prey_id]" id="hunt_session_hunt_session_preys_attributes_1_prey_id">
+  <input autocomplete="off" data-role="prey-level" type="hidden" name="hunt_session[hunt_session_preys_attributes][1][prey_level]" id="hunt_session_hunt_session_preys_attributes_1_prey_level">
+
+  <div class="ha-prey-card-icon shrink-0 pt-0.5">
+    <div class="ha-prey-icon-frame">
+      <button type="button" class="ha-prey-icon-button is-empty" data-role="prey-icon-button" data-action="click-&gt;hunt-session-preys#openPreyTypeModal">
+        <span class="text-base font-semibold leading-none text-brand-ink-soft " data-role="prey-placeholder">+</span>
+        <img class="h-full w-full object-contain hidden" alt="" data-role="prey-icon" src="">
+      </button>
+
+      <button type="button" class="ha-prey-clear is-hidden" data-role="prey-clear" aria-label="Clear prey" data-action="click-&gt;hunt-session-preys#clearPreyType">
+        x
+      </button>
+    </div>
+  </div>
+
+  <div class="ha-prey-card-body min-w-0 flex-1 flex flex-col gap-1.5 ml-1.5">
+    <div class="flex items-center gap-2">
+      <span class="text-sm font-semibold text-brand-ink truncate" data-role="prey-name">
+        Select prey
+      </span>
+      <span class="tooltip relative inline-flex items-center justify-center hidden" data-role="prey-tooltip">
+        <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+        <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10" data-role="prey-tooltip-text">
+          
+        </span>
+      </span>
+    </div>
+
+    <div class="flex items-start gap-3">
+      <div class="ha-prey-stars">
+          <div class="flex gap-0.5">
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="1" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="2" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="3" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="4" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="5" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+          </div>
+          <div class="flex gap-0.5">
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="6" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="7" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="8" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="9" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="10" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+          </div>
+      </div>
+
+      <div class="ha-prey-bonus-block flex flex-col items-start" data-role="prey-bonus-block">
+        <span class="text-[11px] font-semibold uppercase tracking-wide text-brand-ink-soft">Bonus</span>
+        <span class="text-xs font-semibold text-brand-ink" data-role="prey-bonus-value"></span>
+      </div>
+    </div>
+
+    <div data-role="prey-creature-wrapper">
+      <div id="prey_1_creature_slot" class="ha-prey-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_preys_attributes][1][creature_id]" value="" data-role="creature-id">
+
+  <div class="ha-prey-creature-frame">
+    <button type="button" class="ha-prey-creature-button" disabled="" data-role="prey-creature-button" data-slot-index="1" data-action="click-&gt;hunt-session-preys#openCreatureModal">
+      <div class="ha-prey-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+      </div>
+    </button>
+
+      <span class="ha-prey-clear is-hidden" data-role="creature-clear"></span>
+  </div>
+
+  <p class="ha-prey-creature-name">Select creature</p>
+</div>
+
+    </div>
+
+  </div>
+</div>
+
+        
+          
+<div class="ha-prey-card" data-hunt-session-preys-target="card" data-prey-slot-index="2" data-base-percentage="" data-percentage-increment="">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_preys_attributes][2][_destroy]" id="hunt_session_hunt_session_preys_attributes_2__destroy">
+  <input autocomplete="off" data-role="prey-id" type="hidden" name="hunt_session[hunt_session_preys_attributes][2][prey_id]" id="hunt_session_hunt_session_preys_attributes_2_prey_id">
+  <input autocomplete="off" data-role="prey-level" type="hidden" name="hunt_session[hunt_session_preys_attributes][2][prey_level]" id="hunt_session_hunt_session_preys_attributes_2_prey_level">
+
+  <div class="ha-prey-card-icon shrink-0 pt-0.5">
+    <div class="ha-prey-icon-frame">
+      <button type="button" class="ha-prey-icon-button is-empty" data-role="prey-icon-button" data-action="click-&gt;hunt-session-preys#openPreyTypeModal">
+        <span class="text-base font-semibold leading-none text-brand-ink-soft " data-role="prey-placeholder">+</span>
+        <img class="h-full w-full object-contain hidden" alt="" data-role="prey-icon" src="">
+      </button>
+
+      <button type="button" class="ha-prey-clear is-hidden" data-role="prey-clear" aria-label="Clear prey" data-action="click-&gt;hunt-session-preys#clearPreyType">
+        x
+      </button>
+    </div>
+  </div>
+
+  <div class="ha-prey-card-body min-w-0 flex-1 flex flex-col gap-1.5 ml-1.5">
+    <div class="flex items-center gap-2">
+      <span class="text-sm font-semibold text-brand-ink truncate" data-role="prey-name">
+        Select prey
+      </span>
+      <span class="tooltip relative inline-flex items-center justify-center hidden" data-role="prey-tooltip">
+        <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+        <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-56 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10" data-role="prey-tooltip-text">
+          
+        </span>
+      </span>
+    </div>
+
+    <div class="flex items-start gap-3">
+      <div class="ha-prey-stars">
+          <div class="flex gap-0.5">
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="1" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="2" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="3" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="4" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="5" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+          </div>
+          <div class="flex gap-0.5">
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="6" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="7" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="8" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="9" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+              <button type="button" class="ha-prey-star " disabled="" data-role="prey-star" data-level="10" data-action="click-&gt;hunt-session-preys#selectStep">
+                <i class="fas fa-star" data-role="prey-star-icon"></i>
+              </button>
+          </div>
+      </div>
+
+      <div class="ha-prey-bonus-block flex flex-col items-start" data-role="prey-bonus-block">
+        <span class="text-[11px] font-semibold uppercase tracking-wide text-brand-ink-soft">Bonus</span>
+        <span class="text-xs font-semibold text-brand-ink" data-role="prey-bonus-value"></span>
+      </div>
+    </div>
+
+    <div data-role="prey-creature-wrapper">
+      <div id="prey_2_creature_slot" class="ha-prey-creature-picker">
+  <input type="hidden" name="hunt_session[hunt_session_preys_attributes][2][creature_id]" value="" data-role="creature-id">
+
+  <div class="ha-prey-creature-frame">
+    <button type="button" class="ha-prey-creature-button" disabled="" data-role="prey-creature-button" data-slot-index="2" data-action="click-&gt;hunt-session-preys#openCreatureModal">
+      <div class="ha-prey-creature-slot is-empty">
+          <span class="text-base font-semibold leading-none text-brand-ink-soft">+</span>
+      </div>
+    </button>
+
+      <span class="ha-prey-clear is-hidden" data-role="creature-clear"></span>
+  </div>
+
+  <p class="ha-prey-creature-name">Select creature</p>
+</div>
+
+    </div>
+
+  </div>
+</div>
+
+    </div>
+  </div>
+
+  <div id="prey_creature_modal"></div>
+
+  <div id="prey_type_modal" class="hidden fixed inset-0 bg-black/60 items-center justify-center z-[10000]" data-action="click-&gt;hunt-session-preys#closePreyTypeModalIfBackdrop">
+  <div class="ha-menu-card p-4 w-full max-w-lg">
+    <div class="flex items-center justify-between mb-3">
+      <span class="font-display font-semibold text-brand-ink">Select a Prey</span>
+      <button type="button" class="ha-button-secondary text-xs" data-action="click-&gt;hunt-session-preys#closePreyTypeModal">
+        Cancel
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70" data-prey-id="3" data-prey-name="Bonus Experience" data-prey-asset-path="/assets/preys/bonus_xp-5f258303.png" data-prey-base-percentage="13.0" data-prey-percentage-increment="3.0" data-prey-effect="Increases the experience earned from kills of the selected creature." data-action="click-&gt;hunt-session-preys#setPreyType">
+          <img class="h-10 w-10 object-contain" alt="Bonus Experience" src="">
+          <div class="flex flex-col">
+            <span class="font-semibold text-brand-ink">Bonus Experience</span>
+            <span class="text-xs text-brand-ink-soft">Increases the experience earned from kills of the selected creature.</span>
+          </div>
+        </button>
+        <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70" data-prey-id="1" data-prey-name="Damage Boost" data-prey-asset-path="/assets/preys/damage_boost-cf6f58f8.png" data-prey-base-percentage="7.0" data-prey-percentage-increment="2.0" data-prey-effect="Increases the damage you deal to the selected creature." data-action="click-&gt;hunt-session-preys#setPreyType">
+          <img class="h-10 w-10 object-contain" alt="Damage Boost" src="">
+          <div class="flex flex-col">
+            <span class="font-semibold text-brand-ink">Damage Boost</span>
+            <span class="text-xs text-brand-ink-soft">Increases the damage you deal to the selected creature.</span>
+          </div>
+        </button>
+        <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70" data-prey-id="2" data-prey-name="Damage Reduction" data-prey-asset-path="/assets/preys/damage_reduction-f51aa345.png" data-prey-base-percentage="12.0" data-prey-percentage-increment="2.0" data-prey-effect="Reduces the damage taken from the selected creature." data-action="click-&gt;hunt-session-preys#setPreyType">
+          <img class="h-10 w-10 object-contain" alt="Damage Reduction" src="">
+          <div class="flex flex-col">
+            <span class="font-semibold text-brand-ink">Damage Reduction</span>
+            <span class="text-xs text-brand-ink-soft">Reduces the damage taken from the selected creature.</span>
+          </div>
+        </button>
+        <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70" data-prey-id="4" data-prey-name="Improved Loot" data-prey-asset-path="/assets/preys/improved_loot-5672beb7.png" data-prey-base-percentage="13.0" data-prey-percentage-increment="3.0" data-prey-effect="Increases the chance of receiving loot from the selected creature." data-action="click-&gt;hunt-session-preys#setPreyType">
+          <img class="h-10 w-10 object-contain" alt="Improved Loot" src="">
+          <div class="flex flex-col">
+            <span class="font-semibold text-brand-ink">Improved Loot</span>
+            <span class="text-xs text-brand-ink-soft">Increases the chance of receiving loot from the selected creature.</span>
+          </div>
+        </button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+
+
+<div class="relative mt-3 rounded-lg border border-brand-surface-3 bg-brand-surface-2/40 p-3" data-controller="hunt-session-stances" data-action="character-select:changedCharacterId@window-&gt;hunt-session-stances#setCharacterId" data-hunt-session-stances-select-stance-label-value="Select stance" data-hunt-session-stances-level-required-template-value="Requires level %{level}" data-hunt-session-stances-initial-vocation-value="paladin">
+  <div>
+    <label class="block text-sm font-medium ha-text-muted">Stances</label>
+    <p class="text-xs text-brand-ink-soft">Select the stance used for this hunt.</p>
+  </div>
+
+  <div class="mt-4">
+    <div class="flex flex-wrap gap-1.5 justify-start">
+        
+          
+<div class="ha-prey-card " data-hunt-session-stances-target="card" data-stance-slot-scope="stance">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_stances_attributes][0][_destroy]" id="hunt_session_hunt_session_stances_attributes_0__destroy">
+  <input autocomplete="off" data-role="stance-id" type="hidden" name="hunt_session[hunt_session_stances_attributes][0][stance_id]" id="hunt_session_hunt_session_stances_attributes_0_stance_id">
+
+  <div class="ha-prey-card-icon shrink-0 pt-0.5">
+    <div class="ha-prey-icon-frame">
+      <button type="button" class="h-14 w-14 rounded-lg border border-brand-surface-3 bg-brand-surface flex items-center justify-center overflow-hidden is-empty border-dashed" data-role="stance-icon-button" data-action="click-&gt;hunt-session-stances#openStanceTypeModal">
+        <span class="text-base font-semibold leading-none text-brand-ink-soft " data-role="stance-placeholder">+</span>
+        <img class="h-full w-full object-contain hidden" alt="" data-role="stance-icon" src="">
+      </button>
+
+      <button type="button" class="ha-prey-clear is-hidden" data-role="stance-clear" aria-label="Clear stance" data-action="click-&gt;hunt-session-stances#clearStanceType">
+        x
+      </button>
+    </div>
+  </div>
+
+  <div class="ha-prey-card-body min-w-0 flex-1 flex flex-col gap-1.5 ml-1.5">
+    <div class="flex items-center gap-2">
+      <span class="text-sm font-semibold text-brand-ink truncate" data-role="stance-name">
+        Select stance
+      </span>
+      <span class="tooltip relative inline-flex items-center justify-center hidden" data-role="stance-tooltip">
+        <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+        <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-64 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+          <strong data-role="stance-tooltip-name"></strong><br>
+          <span data-role="stance-tooltip-effect"></span>
+        </span>
+      </span>
+    </div>
+
+    <div class="text-[11px] text-brand-ink-soft" data-role="stance-level-required">
+    </div>
+
+  </div>
+</div>
+
+        
+          
+<div class="ha-prey-card hidden" data-hunt-session-stances-target="card" data-stance-slot-scope="crippling">
+  
+  <input autocomplete="off" value="0" data-role="destroy-flag" type="hidden" name="hunt_session[hunt_session_stances_attributes][1][_destroy]" id="hunt_session_hunt_session_stances_attributes_1__destroy">
+  <input autocomplete="off" data-role="stance-id" type="hidden" name="hunt_session[hunt_session_stances_attributes][1][stance_id]" id="hunt_session_hunt_session_stances_attributes_1_stance_id">
+
+  <div class="ha-prey-card-icon shrink-0 pt-0.5">
+    <div class="ha-prey-icon-frame">
+      <button type="button" class="h-14 w-14 rounded-lg border border-brand-surface-3 bg-brand-surface flex items-center justify-center overflow-hidden is-empty border-dashed" data-role="stance-icon-button" data-action="click-&gt;hunt-session-stances#openStanceTypeModal">
+        <span class="text-base font-semibold leading-none text-brand-ink-soft " data-role="stance-placeholder">+</span>
+        <img class="h-full w-full object-contain hidden" alt="" data-role="stance-icon" src="">
+      </button>
+
+      <button type="button" class="ha-prey-clear is-hidden" data-role="stance-clear" aria-label="Clear stance" data-action="click-&gt;hunt-session-stances#clearStanceType">
+        x
+      </button>
+    </div>
+  </div>
+
+  <div class="ha-prey-card-body min-w-0 flex-1 flex flex-col gap-1.5 ml-1.5">
+    <div class="flex items-center gap-2">
+      <span class="text-sm font-semibold text-brand-ink truncate" data-role="stance-name">
+        Select stance
+      </span>
+      <span class="tooltip relative inline-flex items-center justify-center hidden" data-role="stance-tooltip">
+        <i class="far fa-question-circle text-xs text-brand-ink-soft"></i>
+        <span class="tooltip-text absolute bottom-full left-1/2 mb-2 w-64 -translate-x-1/2 transform rounded bg-brand-ink p-2 text-left text-xs text-brand-surface shadow-brand-lg z-10">
+          <strong data-role="stance-tooltip-name"></strong><br>
+          <span data-role="stance-tooltip-effect"></span>
+        </span>
+      </span>
+    </div>
+
+    <div class="text-[11px] text-brand-ink-soft" data-role="stance-level-required">
+    </div>
+
+  </div>
+</div>
+
+    </div>
+  </div>
+
+  
+<div id="stance_type_modal" class="hidden fixed inset-0 bg-black/60 items-center justify-center z-[10000]" data-action="click-&gt;hunt-session-stances#closeStanceTypeModalIfBackdrop">
+  <div class="ha-menu-card p-4 w-full max-w-lg max-h-[80vh] overflow-y-auto overscroll-contain">
+    <div class="flex items-center justify-between mb-3">
+      <span class="font-display font-semibold text-brand-ink">Select a Stance</span>
+      <button type="button" class="ha-button-secondary text-xs" data-action="click-&gt;hunt-session-stances#closeStanceTypeModal">
+        Cancel
+      </button>
+    </div>
+
+      <div class="mb-3 hidden" data-role="stance-vocation-group" data-vocation="knight">
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-brand-ink-soft mb-1.5 hidden" data-role="stance-vocation-heading">
+          Knight
+        </h4>
+        <div class="flex flex-col gap-2">
+            <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70 " data-role="stance-option" data-stance-id="1" data-stance-name="Blood Rage" data-stance-asset-path="/assets/stances/blood_rage-eae5ecba.gif" data-stance-effect="Grants 25% sword/axe/club fighting and increases damage taken by 15%. The skill bonus impacts a character's total skill (including bonuses from gear and other buffs like potions)." data-stance-level-required="20" data-stance-vocation="knight" data-stance-slot="stance" data-action="click-&gt;hunt-session-stances#setStanceType">
+              <img class="h-10 w-10 object-contain" alt="Blood Rage" src="">
+              <div class="flex flex-col min-w-0">
+                <span class="font-semibold text-brand-ink">Blood Rage</span>
+                <span class="text-xs text-brand-ink-soft">Grants 25% sword/axe/club fighting and increases damage taken by 15%. The skill bonus impacts a character's total skill (including bonuses from gear and other buffs like potions).</span>
+              </div>
+            </button>
+            <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70 " data-role="stance-option" data-stance-id="2" data-stance-name="Protector" data-stance-asset-path="/assets/stances/protector-3aa28397.gif" data-stance-effect="Grants 30% shielding and reduces damage taken as well as damage done by 15%. The skill bonus impacts a character's total skill (including bonuses from gear and other buffs like potions)." data-stance-level-required="20" data-stance-vocation="knight" data-stance-slot="stance" data-action="click-&gt;hunt-session-stances#setStanceType">
+              <img class="h-10 w-10 object-contain" alt="Protector" src="">
+              <div class="flex flex-col min-w-0">
+                <span class="font-semibold text-brand-ink">Protector</span>
+                <span class="text-xs text-brand-ink-soft">Grants 30% shielding and reduces damage taken as well as damage done by 15%. The skill bonus impacts a character's total skill (including bonuses from gear and other buffs like potions).</span>
+              </div>
+            </button>
+        </div>
+      </div>
+      <div class="mb-3 " data-role="stance-vocation-group" data-vocation="paladin">
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-brand-ink-soft mb-1.5 hidden" data-role="stance-vocation-heading">
+          Paladin
+        </h4>
+        <div class="flex flex-col gap-2">
+            <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70 " data-role="stance-option" data-stance-id="4" data-stance-name="Divine Defiance" data-stance-asset-path="/assets/stances/divine_defiance-e18ae6dd.gif" data-stance-effect="Grants 6% of Distance Fighting as holy and healing magic level, as well as 12% Dodge against non adjacent enemies." data-stance-level-required="20" data-stance-vocation="paladin" data-stance-slot="stance" data-action="click-&gt;hunt-session-stances#setStanceType">
+              <img class="h-10 w-10 object-contain" alt="Divine Defiance" src="">
+              <div class="flex flex-col min-w-0">
+                <span class="font-semibold text-brand-ink">Divine Defiance</span>
+                <span class="text-xs text-brand-ink-soft">Grants 6% of Distance Fighting as holy and healing magic level, as well as 12% Dodge against non adjacent enemies.</span>
+              </div>
+            </button>
+            <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70 " data-role="stance-option" data-stance-id="3" data-stance-name="Sharpshooter" data-stance-asset-path="/assets/stances/sharpshooter-59f86eaf.gif" data-stance-effect="Grants 32% Distance Fighting. The skill bonus impacts your total skill (including bonuses from gear and other buffs like potions)." data-stance-level-required="20" data-stance-vocation="paladin" data-stance-slot="stance" data-action="click-&gt;hunt-session-stances#setStanceType">
+              <img class="h-10 w-10 object-contain" alt="Sharpshooter" src="">
+              <div class="flex flex-col min-w-0">
+                <span class="font-semibold text-brand-ink">Sharpshooter</span>
+                <span class="text-xs text-brand-ink-soft">Grants 32% Distance Fighting. The skill bonus impacts your total skill (including bonuses from gear and other buffs like potions).</span>
+              </div>
+            </button>
+        </div>
+      </div>
+      <div class="mb-3 hidden" data-role="stance-vocation-group" data-vocation="sorcerer">
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-brand-ink-soft mb-1.5 hidden" data-role="stance-vocation-heading">
+          Sorcerer
+        </h4>
+        <div class="flex flex-col gap-2">
+            <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70 hidden" data-role="stance-option" data-stance-id="12" data-stance-name="Aura of Exposed Weakness" data-stance-asset-path="/assets/stances/aura_of_exposed_weakness-6354e70a.gif" data-stance-effect="Your spells, runes and auto attacks apply Expose Weakness to their targets, granting 8% Elemental Pierce to attackers." data-stance-level-required="175" data-stance-vocation="sorcerer" data-stance-slot="crippling" data-action="click-&gt;hunt-session-stances#setStanceType">
+              <img class="h-10 w-10 object-contain" alt="Aura of Exposed Weakness" src="">
+              <div class="flex flex-col min-w-0">
+                <span class="font-semibold text-brand-ink">Aura of Exposed Weakness</span>
+                <span class="text-xs text-brand-ink-soft">Your spells, runes and auto attacks apply Expose Weakness to their targets, granting 8% Elemental Pierce to attackers.</span>
+              </div>
+            </button>
+            <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70 hidden" data-role="stance-option" data-stance-id="11" data-stance-name="Aura of Sapped Strength" data-stance-asset-path="/assets/stances/aura_of_sapped_strength-68f77e84.gif" data-stance-effect="Your spells, runes and auto attacks apply Sap Strength to their targets, reducing the damage they deal by 10%." data-stance-level-required="175" data-stance-vocation="sorcerer" data-stance-slot="crippling" data-action="click-&gt;hunt-session-stances#setStanceType">
+              <img class="h-10 w-10 object-contain" alt="Aura of Sapped Strength" src="">
+              <div class="flex flex-col min-w-0">
+                <span class="font-semibold text-brand-ink">Aura of Sapped Strength</span>
+                <span class="text-xs text-brand-ink-soft">Your spells, runes and auto attacks apply Sap Strength to their targets, reducing the damage they deal by 10%.</span>
+              </div>
+            </button>
+            <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70 " data-role="stance-option" data-stance-id="10" data-stance-name="Master of Decay" data-stance-asset-path="/assets/stances/master_of_decay-7a56bd40.gif" data-stance-effect="Increases the critical extra damage of natural Death Damage spells by 30%. Additionally, whenever you cast a death spell, change the damage of your next non-death spell into death." data-stance-level-required="20" data-stance-vocation="sorcerer" data-stance-slot="stance" data-action="click-&gt;hunt-session-stances#setStanceType">
+              <img class="h-10 w-10 object-contain" alt="Master of Decay" src="">
+              <div class="flex flex-col min-w-0">
+                <span class="font-semibold text-brand-ink">Master of Decay</span>
+                <span class="text-xs text-brand-ink-soft">Increases the critical extra damage of natural Death Damage spells by 30%. Additionally, whenever you cast a death spell, change the damage of your next non-death spell into death.</span>
+              </div>
+            </button>
+            <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70 " data-role="stance-option" data-stance-id="8" data-stance-name="Master of Flames" data-stance-asset-path="/assets/stances/master_of_flames-d5dbb3ae.gif" data-stance-effect="Increases the base damage of natural Fire Damage spells by 4%. Additionally, whenever you cast a fire spell, change the damage of your next non-fire spell into fire." data-stance-level-required="20" data-stance-vocation="sorcerer" data-stance-slot="stance" data-action="click-&gt;hunt-session-stances#setStanceType">
+              <img class="h-10 w-10 object-contain" alt="Master of Flames" src="">
+              <div class="flex flex-col min-w-0">
+                <span class="font-semibold text-brand-ink">Master of Flames</span>
+                <span class="text-xs text-brand-ink-soft">Increases the base damage of natural Fire Damage spells by 4%. Additionally, whenever you cast a fire spell, change the damage of your next non-fire spell into fire.</span>
+              </div>
+            </button>
+            <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70 " data-role="stance-option" data-stance-id="9" data-stance-name="Master of Thunder" data-stance-asset-path="/assets/stances/master_of_thunder-597787cf.gif" data-stance-effect="Increases the Critical Hit chance of natural Energy Damage spells by 4%. Additionally, whenever you cast an energy spell, change the damage of your next non-energy spell into energy." data-stance-level-required="20" data-stance-vocation="sorcerer" data-stance-slot="stance" data-action="click-&gt;hunt-session-stances#setStanceType">
+              <img class="h-10 w-10 object-contain" alt="Master of Thunder" src="">
+              <div class="flex flex-col min-w-0">
+                <span class="font-semibold text-brand-ink">Master of Thunder</span>
+                <span class="text-xs text-brand-ink-soft">Increases the Critical Hit chance of natural Energy Damage spells by 4%. Additionally, whenever you cast an energy spell, change the damage of your next non-energy spell into energy.</span>
+              </div>
+            </button>
+        </div>
+      </div>
+      <div class="mb-3 hidden" data-role="stance-vocation-group" data-vocation="druid">
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-brand-ink-soft mb-1.5 hidden" data-role="stance-vocation-heading">
+          Druid
+        </h4>
+        <div class="flex flex-col gap-2">
+            <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70 " data-role="stance-option" data-stance-id="14" data-stance-name="Elemental Synthesis" data-stance-asset-path="/assets/stances/elemental_synthesis-dcb0bfe0.gif" data-stance-effect="Grants 10% of your Magic Level as additional ice and earth magic level." data-stance-level-required="20" data-stance-vocation="druid" data-stance-slot="stance" data-action="click-&gt;hunt-session-stances#setStanceType">
+              <img class="h-10 w-10 object-contain" alt="Elemental Synthesis" src="">
+              <div class="flex flex-col min-w-0">
+                <span class="font-semibold text-brand-ink">Elemental Synthesis</span>
+                <span class="text-xs text-brand-ink-soft">Grants 10% of your Magic Level as additional ice and earth magic level.</span>
+              </div>
+            </button>
+            <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70 " data-role="stance-option" data-stance-id="13" data-stance-name="Shared Conservation" data-stance-asset-path="/assets/stances/shared_conservation-ce049aea.gif" data-stance-effect="Grants +10% self-healing. Additionally, Heal Friend and Nature's Embrace heal a secondary target for 30% of their healing, where the secondary target is the lowest health in the gamewindow and party and cannot be the original target." data-stance-level-required="20" data-stance-vocation="druid" data-stance-slot="stance" data-action="click-&gt;hunt-session-stances#setStanceType">
+              <img class="h-10 w-10 object-contain" alt="Shared Conservation" src="">
+              <div class="flex flex-col min-w-0">
+                <span class="font-semibold text-brand-ink">Shared Conservation</span>
+                <span class="text-xs text-brand-ink-soft">Grants +10% self-healing. Additionally, Heal Friend and Nature's Embrace heal a secondary target for 30% of their healing, where the secondary target is the lowest health in the gamewindow and party and cannot be the original target.</span>
+              </div>
+            </button>
+        </div>
+      </div>
+      <div class="mb-3 hidden" data-role="stance-vocation-group" data-vocation="monk">
+        <h4 class="text-xs font-semibold uppercase tracking-wide text-brand-ink-soft mb-1.5 hidden" data-role="stance-vocation-heading">
+          Monk
+        </h4>
+        <div class="flex flex-col gap-2">
+            <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70 " data-role="stance-option" data-stance-id="5" data-stance-name="Virtue of Harmony" data-stance-asset-path="/assets/stances/virtue_of_harmony-49e0b047.gif" data-stance-effect="Increases the Harmony base bonus by 3%, or 6% if Serene. In addition, whenever a Spender is used while in Virtue of Harmony, it will refund 1 Harmony." data-stance-level-required="20" data-stance-vocation="monk" data-stance-slot="stance" data-action="click-&gt;hunt-session-stances#setStanceType">
+              <img class="h-10 w-10 object-contain" alt="Virtue of Harmony" src="">
+              <div class="flex flex-col min-w-0">
+                <span class="font-semibold text-brand-ink">Virtue of Harmony</span>
+                <span class="text-xs text-brand-ink-soft">Increases the Harmony base bonus by 3%, or 6% if Serene. In addition, whenever a Spender is used while in Virtue of Harmony, it will refund 1 Harmony.</span>
+              </div>
+            </button>
+            <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70 " data-role="stance-option" data-stance-id="6" data-stance-name="Virtue of Justice" data-stance-asset-path="/assets/stances/virtue_of_justice-f8253186.gif" data-stance-effect="Increases Fist Fighting by 8%, or 16% when serene." data-stance-level-required="20" data-stance-vocation="monk" data-stance-slot="stance" data-action="click-&gt;hunt-session-stances#setStanceType">
+              <img class="h-10 w-10 object-contain" alt="Virtue of Justice" src="">
+              <div class="flex flex-col min-w-0">
+                <span class="font-semibold text-brand-ink">Virtue of Justice</span>
+                <span class="text-xs text-brand-ink-soft">Increases Fist Fighting by 8%, or 16% when serene.</span>
+              </div>
+            </button>
+            <button type="button" class="ha-prey-type-option flex items-center gap-3 rounded border border-brand-surface-3 p-3 text-left hover:bg-brand-surface-2/70 " data-role="stance-option" data-stance-id="7" data-stance-name="Virtue of Sustain" data-stance-asset-path="/assets/stances/virtue_of_sustain-ee851789.gif" data-stance-effect="Increases all healing done by monk spells by 35%, or 70% when serene. This does include the passive heal of Virtues when generating or spending Harmony." data-stance-level-required="20" data-stance-vocation="monk" data-stance-slot="stance" data-action="click-&gt;hunt-session-stances#setStanceType">
+              <img class="h-10 w-10 object-contain" alt="Virtue of Sustain" src="">
+              <div class="flex flex-col min-w-0">
+                <span class="font-semibold text-brand-ink">Virtue of Sustain</span>
+                <span class="text-xs text-brand-ink-soft">Increases all healing done by monk spells by 35%, or 70% when serene. This does include the passive heal of Virtues when generating or spending Harmony.</span>
+              </div>
+            </button>
+        </div>
+      </div>
+  </div>
+</div>
+
+</div>
+
+
+
+  </div>
+</section>
+
+  <!-- Submit Button -->
+  <div class="flex justify-end gap-2">
+    <a class="ha-button-secondary" href="/hunt_sessions">Cancel</a>
+    <button type="submit" class="ha-button">Save</button>
+  </div>
+</form>
+</turbo-frame>
+  <form id="character_item_form_hunt_session_panel" action="/hunt_sessions/new#" accept-charset="UTF-8" method="post"><input type="hidden" name="authenticity_token" value="MOCK" autocomplete="off">
+</form>
+  <div id="wheel_of_destiny_modal_container"></div>
+
+<div id="wheel_of_destiny_limit_prompt"></div>
+
+
+
+  <div id="character_set_modal_container"></div>
+
+<div id="character_item_duplicate_payload"></div>
+
+<div id="character_item_deletion_payload"></div>
+
+<div id="character_set_limit_prompt"></div>
+
+
+
+  <div id="character_modal_container"></div>
+
+
+  <div id="friend_modal_container"></div>
+
+</div>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- app/views/shared/_footer.html.erb -->
+<footer class="ha-footer">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
+      <div>
+        <h2 class="ha-footer-title">Follow Us</h2>
+        <div class="flex flex-col gap-2 mt-3">
+          <a class="ha-footer-link" target="_blank" href="https://instagram.com/huntanalyser">
+            <i class="fab fa-instagram text-primary"></i>
+            Instagram
+</a>          <a class="ha-footer-link" target="_blank" href="https://www.youtube.com/@HuntAnalyser">
+            <i class="fab fa-youtube text-secondary"></i>
+            YouTube
+</a>          <a class="ha-footer-link" target="_blank" href="https://world.hey.com/huntanalyser">
+            <i class="fa-solid fa-rss text-primary"></i>
+            Updates Blog
+</a>        </div>
+      </div>
+      <div>
+        <h2 class="ha-footer-title">Resources</h2>
+        <p class="text-sm mt-2 text-brand-ink-soft">Special thanks for providing images and information:</p>
+        <ul class="mt-3 space-y-1">
+          <li><a class="ha-footer-link" target="_blank" href="https://tibia.fandom.com/">Tibia Fandom</a></li>
+          <li><a class="ha-footer-link" target="_blank" href="https://www.tibiawiki.com.br/">Tibia Wiki BR</a></li>
+          <li><a class="ha-footer-link" target="_blank" href="https://tibiadata.com/">Tibia Data API</a></li>
+          <li><a class="ha-footer-link" target="_blank" href="https://www.tibia.com/">Tibia.com - Oficial</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2 class="ha-footer-title">More</h2>
+        <ul class="mt-3 space-y-2">
+          <li><a class="ha-footer-link" href="/supports/new">Support</a></li>
+          <li><a class="ha-footer-link" href="/faqs">FAQ</a></li>
+          <li><a class="ha-footer-link" target="_blank" href="https://world.hey.com/huntanalyser">Newsletter</a></li>
+          <li><a class="ha-footer-link" target="_blank" href="/tutorials">Tutorials</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="text-sm text-center mt-8">
+      <div class="flex flex-col items-center mb-6">
+        <h2 class="ha-footer-title mb-3">Fansite Programme</h2>
+        <a href="/home/index"><img alt="Hunt Analyser" class="h-32 drop-shadow-md" src=""></a>
+      </div>
+      <div class="text-brand-ink-soft leading-relaxed ha-footer-legal">
+        Developed and maintained by <a target="_blank" class="ha-footer-link" href="https://linktr.ee/rachidcalazans">Rachid Calazans</a> since 2023. All rights reserved. Our data is based on <a target="_blank" class="ha-footer-link" href="https://www.tibia.com/">Tibia.com</a>, the only official Tibia website.
+        <div class="mt-2">
+          Tibia is a registered trademark of <a target="_blank" class="ha-footer-link" href="https://www.cipsoft.com/en/">CipSoft GmbH</a>. Tibia and all products related to Tibia are copyrighted by <a target="_blank" class="ha-footer-link" href="https://www.cipsoft.com/en/">CipSoft GmbH</a>.
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+
+    <!-- Mobile Menu Modals -->
+    <div class="fixed inset-0 bg-black/70 hidden z-[9999]" id="mobileMenuModal" data-mobile-menu="main" data-header-menu-toggle-target="mobileMenu">
+      <div class="absolute inset-0 flex items-start justify-center p-4">
+        <div class="w-full max-w-2xl ha-menu-card p-6 space-y-6 max-h-[85vh] overflow-y-auto overscroll-contain z-[10000]" data-mobile-menu-panel="">
+          <div class="flex justify-between items-center">
+            <span class="text-lg font-display font-bold tracking-wide">MENU</span>
+            <button class="rounded-full border border-brand-surface-3 p-2 hover:bg-brand-surface-2/60" data-mobile-menu="main" data-action="click-&gt;header-menu-toggle#toggleMobile" aria-label="Close menu">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+            <div class="space-y-4">
+  <div class="grid md:grid-cols-3 grid-cols-2 gap-3">
+    <a class="ha-menu-tile" href="/">
+      <i class="fas fa-bolt text-lg text-primary"></i>
+      Hunt Sessions
+</a>    <a class="ha-menu-tile" href="/payment_distributions">
+      <i class="fas fa-check-double text-lg text-primary"></i>
+      Payment Distributions
+</a>    <a class="ha-menu-tile" href="/creature_analysis">
+      <i class="fas fa-dragon text-lg text-primary"></i>
+      Creature Analysis
+</a>    <a class="ha-menu-tile" href="/hunt_comparasion_report">
+      <i class="fas fa-chart-line text-lg text-primary"></i>
+      Comparison Report
+</a>    <a class="ha-menu-tile" href="/character_performances">
+      <i class="fas fa-award text-lg text-primary"></i>
+      Character Performance
+</a>    <a class="ha-menu-tile" href="/characters">
+      <i class="fas fa-hat-wizard text-lg text-primary"></i>
+      Characters
+</a>  </div>
+
+  <a class="ha-menu-item" href="/templates/hunt_sessions">
+    <i class="fas fa-copy ha-nav-icon text-primary"></i>
+    Hunt Templates
+</a>
+  <a class="ha-menu-item" href="/friends">
+    <i class="fas fa-people-group ha-nav-icon text-primary"></i>
+    Friends
+</a>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+      <div class="fixed inset-0 bg-black/70 hidden z-[9999]" id="mobileAccountModal" data-mobile-menu="account" data-header-menu-toggle-target="mobileMenu">
+        <div class="absolute inset-0 flex items-start justify-end p-4">
+          <div class="w-full max-w-xs ha-menu-card p-6 space-y-6 max-h-[85vh] overflow-y-auto overscroll-contain z-[10000]" data-mobile-menu-panel="">
+            <div class="flex justify-between items-center">
+              <div>
+                <span class="text-lg font-display font-bold tracking-wide">Vesox</span>
+                <span class="block text-xs ha-text-muted mt-1">
+                  Pro plan
+                </span>
+              </div>
+              <button class="rounded-full border border-brand-surface-3 p-2 hover:bg-brand-surface-2/60" data-mobile-menu="account" data-action="click-&gt;header-menu-toggle#toggleMobile" aria-label="Close menu">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+
+            <nav class="space-y-4 text-base font-semibold">
+  <a class="ha-menu-item" href="/account/subscriptions">
+    <i class="fas fa-crown ha-nav-icon text-primary"></i>
+    Subscriptions
+</a>  <a class="ha-menu-item" href="/settings">
+    <i class="fas fa-user-gear ha-nav-icon text-primary"></i>
+    Settings
+</a>
+  <details class="group">
+  <summary class="ha-menu-item cursor-pointer list-none">
+    <i class="fas fa-globe ha-nav-icon text-primary"></i>
+    Language
+    <span class="ml-auto flex items-center gap-1 text-xs font-normal text-brand-ink-soft">
+      <img class="w-4 h-4 rounded-full overflow-hidden object-cover" alt="English" src="">
+      EN
+      <i class="fas fa-chevron-down text-[10px] transition-transform group-open:rotate-180"></i>
+    </span>
+  </summary>
+
+  <div class="mt-1 space-y-0.5">
+      <form class="block" data-turbo="false" action="/locale" accept-charset="UTF-8" method="post"><input type="hidden" name="_method" value="patch" autocomplete="off"><input type="hidden" name="authenticity_token" value="MOCK" autocomplete="off">
+        <input autocomplete="off" value="en" type="hidden" name="locale" id="locale">
+        <button name="button" type="submit" class="ha-menu-item w-full pl-6 text-sm">
+          <span class="flex items-center gap-2">
+            <img class="w-4 h-4 rounded-full overflow-hidden object-cover" alt="English" src="">
+            English
+          </span>
+            <i class="fas fa-check ml-auto text-xs text-primary"></i>
+</button></form>      <form class="block" data-turbo="false" action="/locale" accept-charset="UTF-8" method="post"><input type="hidden" name="_method" value="patch" autocomplete="off"><input type="hidden" name="authenticity_token" value="MOCK" autocomplete="off">
+        <input autocomplete="off" value="pt-BR" type="hidden" name="locale" id="locale">
+        <button name="button" type="submit" class="ha-menu-item w-full pl-6 text-sm">
+          <span class="flex items-center gap-2">
+            <img class="w-4 h-4 rounded-full overflow-hidden object-cover" alt="Português" src="">
+            Português
+          </span>
+</button></form>      <form class="block" data-turbo="false" action="/locale" accept-charset="UTF-8" method="post"><input type="hidden" name="_method" value="patch" autocomplete="off"><input type="hidden" name="authenticity_token" value="MOCK" autocomplete="off">
+        <input autocomplete="off" value="de" type="hidden" name="locale" id="locale">
+        <button name="button" type="submit" class="ha-menu-item w-full pl-6 text-sm">
+          <span class="flex items-center gap-2">
+            <img class="w-4 h-4 rounded-full overflow-hidden object-cover" alt="Deutsch" src="">
+            Deutsch
+          </span>
+</button></form>      <form class="block" data-turbo="false" action="/locale" accept-charset="UTF-8" method="post"><input type="hidden" name="_method" value="patch" autocomplete="off"><input type="hidden" name="authenticity_token" value="MOCK" autocomplete="off">
+        <input autocomplete="off" value="es" type="hidden" name="locale" id="locale">
+        <button name="button" type="submit" class="ha-menu-item w-full pl-6 text-sm">
+          <span class="flex items-center gap-2">
+            <img class="w-4 h-4 rounded-full overflow-hidden object-cover" alt="Español" src="">
+            Español
+          </span>
+</button></form>      <form class="block" data-turbo="false" action="/locale" accept-charset="UTF-8" method="post"><input type="hidden" name="_method" value="patch" autocomplete="off"><input type="hidden" name="authenticity_token" value="MOCK" autocomplete="off">
+        <input autocomplete="off" value="pl" type="hidden" name="locale" id="locale">
+        <button name="button" type="submit" class="ha-menu-item w-full pl-6 text-sm">
+          <span class="flex items-center gap-2">
+            <img class="w-4 h-4 rounded-full overflow-hidden object-cover" alt="Polski" src="">
+            Polski
+          </span>
+</button></form>  </div>
+</details>
+
+
+  <hr class="ha-menu-divider">
+
+  <a target="_blank" class="ha-menu-item" href="https://world.hey.com/huntanalyser">
+    <i class="fas fa-bell ha-nav-icon text-primary"></i>
+    Latest Updates
+      <span id="notifications_badge_mobile_account" class="ml-auto inline-flex items-center gap-1 rounded-full bg-brand-gold/30 border border-brand-gold/60 px-2 py-0.5 text-[10px] font-semibold text-brand-ink">
+        <span class="relative inline-flex h-1.5 w-1.5">
+          <span class="absolute inline-flex h-full w-full rounded-full bg-brand-ember animate-ping"></span>
+          <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-brand-ember"></span>
+        </span>
+        New
+        <span class="inline-flex min-w-[14px] h-[14px] items-center justify-center rounded-full bg-brand-ember/90 px-1 text-[9px] font-bold text-white leading-none">
+          4
+        </span>
+      </span>
+</a>
+  <hr class="ha-menu-divider">
+
+  <details class="group">
+    <summary class="ha-menu-item cursor-pointer list-none">
+      <i class="fas fa-circle-question ha-nav-icon text-primary"></i>
+      Helper
+      <i class="fas fa-chevron-down ml-auto text-xs transition-transform group-open:rotate-180"></i>
+    </summary>
+    <div class="mt-2 space-y-2 text-sm">
+      <a class="ha-menu-item pl-2" href="/supports/new">
+        <i class="fas fa-life-ring ha-nav-icon text-primary"></i>
+        Contact Support
+</a>      <a class="ha-menu-item pl-2" href="/supports/new?request_type=feedback">
+        <i class="fas fa-comment-dots ha-nav-icon text-primary"></i>
+        Share feedback
+</a>      <a class="ha-menu-item pl-2" href="/tutorials">
+        <i class="fas fa-video ha-nav-icon text-primary"></i>
+        Tutorials
+</a>      <a class="ha-menu-item pl-2" href="/faqs">
+        <i class="fas fa-circle-question ha-nav-icon text-primary"></i>
+        FAQ
+</a>    </div>
+  </details>
+
+  <hr class="ha-menu-divider">
+
+  <form action="/logout" method="post" class="w-full">
+    <input type="hidden" name="_method" value="delete">
+    <input type="hidden" name="authenticity_token" value="MOCK">
+    <button type="submit" class="ha-menu-item w-full">
+      <i class="fas fa-arrow-right-from-bracket ha-nav-icon text-primary"></i>
+      Sign Out
+    </button>
+  </form>
+</nav>
+
+          </div>
+        </div>
+      </div>
+  
+
+</body></html>
