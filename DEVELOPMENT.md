@@ -18,6 +18,8 @@ Wymagany Python 3.10+.
 | `api.py`, `parser.py` | zapytania do tibialoot.com i parsowanie tablicy |
 | `slots.py` | wolne okna i walidacja terminów |
 | `sniper.py` | snajp i obserwacja |
+| `today.py` | sekcja „Dziś”: boosted (TibiaData API), Rashid i mapka |
+| `assets/maps/`, `tools/make_rashid_maps.py` | wycinki mapy przy Rashidzie (tibiamaps.io) i skrypt do ich odtworzenia |
 | `sounds.py` | dźwięki i głośność |
 | `paths.py` | folder danych i migracja ze starych lokalizacji |
 | `updater.py`, `version.py` | aktualizacje z GitHub Releases |
@@ -30,6 +32,21 @@ Wymagany Python 3.10+.
 ## Budowanie .exe
 
 `zbuduj_exe.bat` tworzy `dist\TibiaAppsCompanion\TibiaAppsCompanion.exe`. Dystrybuuje się cały folder, nie sam plik .exe.
+
+## Ostrzeżenia antywirusa i SmartScreen
+
+Build ogranicza fałszywe alarmy na dwa sposoby:
+- `--noupx`: plik .exe nie jest pakowany UPX-em, a to najczęstszy powód alarmów.
+- `--version-file`: plik .exe ma metadane, czyli nazwę, wersję i opis.
+
+Komunikat „System Windows ochronił ten komputer” (SmartScreen) pojawia się przy każdym niepodpisanym pliku od nowego wydawcy. Trwale znika dopiero po **podpisaniu** pliku certyfikatem:
+- **Azure Trusted Signing**: ok. 10 USD/mies., działa dla osób prywatnych z weryfikacją tożsamości. Najtańsza oficjalna droga.
+- **SignPath Foundation**: darmowy podpis dla projektów open source, wymaga zgłoszenia projektu.
+- Klasyczny certyfikat OV/EV od CA: od ok. 200 USD/rok.
+
+Bez podpisu pomaga:
+- Zgłoszenie każdego wydania jako fałszywego alarmu do Microsoftu: https://www.microsoft.com/wdsi/filesubmission. Wybierz „Software developer” i plik .zip z wydania.
+- Reputacja SmartScreen, która rośnie z liczbą pobrań tego samego pliku.
 
 ## Wydanie nowej wersji
 

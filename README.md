@@ -22,6 +22,10 @@ Aplikacja na Windows dla graczy Tibii. Pomaga rezerwować respy na **tibialoot.c
 - Prey, XP Boost, Boosted creature i eventy.
 - Wypełnia formularz „New hunt session” jednym kliknięciem. Na życzenie od razu zapisuje.
 
+**Dziś** (pasek boczny)
+- Boosted creature i boosted boss: obrazek, a po najechaniu nazwa.
+- Rashid: po najechaniu mapa okolicy z zaznaczonym miejscem, nazwą miasta i opisem, gdzie dokładnie stoi. Zmiana następuje o server save.
+
 **Całość**
 - Jedno logowanie do obu stron, w okienku aplikacji. Aplikacja nie zna Twoich haseł.
 - Jedno okno ustawień i wspólny log.
@@ -59,7 +63,7 @@ Lista spawnów (lokacje, piętra i potwory używane do rozpoznawania huntów) ak
 ## Dane i prywatność
 
 - Wszystko jest zapisywane tylko na Twoim komputerze, w `%APPDATA%\TibiaAppsCompanion\`. Hunty są w podfolderze `hunty\`.
-- Aplikacja łączy się wyłącznie z tibialoot.com, hunt-analyser.com i GitHubem (sprawdzanie aktualizacji). Nie wysyła żadnych statystyk.
+- Aplikacja łączy się wyłącznie z tibialoot.com, hunt-analyser.com i GitHubem (aktualizacje) i api.tibiadata.com (boosted creature i boss). Nie wysyła żadnych statystyk.
 - Logowanie odbywa się bezpośrednio na stronach. Aplikacja przechowuje tylko sesję (ciasteczka), tak jak przeglądarka.
 - Wysyła do stron te same zapytania co ich własne przyciski i odświeża tablicę nie częściej niż co 30 s.
 
@@ -73,6 +77,10 @@ Lista spawnów (lokacje, piętra i potwory używane do rozpoznawania huntów) ak
 | Nie wypełnia formularza huntu | Ustawienia → Hunty → wybierz inną przeglądarkę. |
 | Aktualizacja się nie udała | Zamknij drugie okno aplikacji i spróbuj ponownie. Upewnij się, że folder aplikacji nie jest w `Program Files`. |
 | Antywirus blokuje plik | Dodaj folder aplikacji do wyjątków. |
+
+## Podziękowania
+
+Wycinki mapy przy Rashidzie: [tibiamaps.io / tibia-map-data](https://github.com/tibiamaps/tibia-map-data), dołączone do aplikacji, więc działają offline. Boosted creature i boss: [TibiaData](https://tibiadata.com).
 
 ## Zastrzeżenia
 

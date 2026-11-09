@@ -13,7 +13,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QObject, Qt, QTimer, Signal
 from PySide6.QtGui import QFont, QGuiApplication, QTextCursor
-from PySide6.QtWidgets import (QApplication, QButtonGroup, QCheckBox, QComboBox, QDialog, QFrame,
+from PySide6.QtWidgets import (QApplication, QBoxLayout, QButtonGroup, QCheckBox, QComboBox, QDialog, QFrame,
                                QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMessageBox,
                                QPlainTextEdit, QPushButton, QRadioButton, QScrollArea,
                                QStackedWidget, QTabWidget, QVBoxLayout, QWidget)
@@ -130,7 +130,8 @@ class HuntUploaderWidget(QWidget):
     def _build(self):
         v = QVBoxLayout(self)
         v.setContentsMargins(0, 0, 0, 0)
-        body = QHBoxLayout()
+        body = QBoxLayout(QBoxLayout.LeftToRight)
+        self.body = body
         body.setSpacing(22)
         v.addLayout(body, 1)
 
@@ -324,6 +325,12 @@ class HuntUploaderWidget(QWidget):
         return f"{'●' if filled else '○'}  {short}"
 
     # ------------------------------------------------------------------ ustawienia
+    def set_stacked(self, stacked: bool):
+        """Wąskie okno: analizatory nad formularzem zamiast obok."""
+        d = QBoxLayout.TopToBottom if stacked else QBoxLayout.LeftToRight
+        if self.body.direction() != d:
+            self.body.setDirection(d)
+
     def apply_settings(self):
         s = self.settings
         if s.multi_char and s.characters:

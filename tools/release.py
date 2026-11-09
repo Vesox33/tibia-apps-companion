@@ -85,7 +85,12 @@ def ensure_repo() -> str:
 
 def build():
     py = sys.executable
-    run([py, "-m", "PyInstaller", "--noconfirm", "--clean", "--onedir", "--windowed", "--name", NAME,
+    sys.path.insert(0, str(ROOT / "tools"))
+    from make_version_info import make as make_version_info
+    vfile = make_version_info()
+    # --noupx: pakowanie UPX to najczęstszy powód fałszywych alarmów antywirusów
+    run([py, "-m", "PyInstaller", "--noconfirm", "--clean", "--onedir", "--windowed", "--noupx", "--name", NAME,
+         "--version-file", str(vfile),
          "--icon", str(ROOT / "assets" / "icon.ico"),
          "--add-data", f"{ROOT / 'assets'};assets",
          "--add-data", f"{ROOT / 'huntuploader' / 'data'};huntuploader/data",

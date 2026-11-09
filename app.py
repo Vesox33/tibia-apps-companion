@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, date
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from PySide6.QtCore import (QDate, QDateTime, QObject, QRect, QRunnable, QSize, Qt,
+from PySide6.QtCore import (QEvent, QDate, QDateTime, QObject, QRect, QRunnable, QSize, Qt,
                             QThreadPool, QTime, QTimer, QUrl, Signal, QStandardPaths)
 from PySide6.QtNetwork import QNetworkCookie
 from PySide6.QtGui import QAction, QBrush, QColor, QFont, QIcon, QPainter, QPen, QPixmap
@@ -19,10 +19,11 @@ from PySide6.QtWidgets import (QApplication, QButtonGroup, QDateEdit, QDateTimeE
                                QLineEdit, QListWidget, QListWidgetItem, QMainWindow,
                                QMessageBox, QPushButton, QSizePolicy, QSplitter, QSpinBox,
                                QSlider, QSystemTrayIcon, QTabWidget, QTimeEdit, QToolTip, QTreeWidget,
-                               QTreeWidgetItem, QVBoxLayout, QWidget, QFormLayout, QCheckBox, QGridLayout, QProgressDialog, QStackedWidget, QPlainTextEdit)
+                               QTreeWidgetItem, QVBoxLayout, QWidget, QFormLayout, QCheckBox, QGridLayout, QBoxLayout, QProgressDialog, QStackedWidget, QPlainTextEdit)
 
 import api
 import paths
+from flowlayout import FlowLayout
 import updater
 from version import UPDATE_REPO, VERSION
 from api import NotLoggedIn, RequestsClient, board_from_html, interpret_post
@@ -514,6 +515,31 @@ class TimeField(QLineEdit):
 
 
 # ---------------------------------------------------------------- wspólne elementy wyglądu
+class ElidedLabel(QLabel):
+    """Jednolinijkowa etykieta, która przy braku miejsca skraca tekst wielokropkiem."""
+
+    def __init__(self, text: str = ""):
+        super().__init__()
+        self._full = text
+        self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+
+    def setText(self, text: str):
+        self._full = text
+        self._elide()
+
+    def text(self) -> str:
+        return self._full
+
+    def minimumSizeHint(self):
+        return QSize(10, super().minimumSizeHint().height())
+
+    def resizeEvent(self, ev):
+        super().resizeEvent(ev)
+        self._elide()
+
+    def _elide(self):
+        super().setText(self.fontMetrics().elidedText(self._full, Qt.ElideRight, max(self.width() - 4, 10)))
+
 def page_header(title: str, subtitle: str, buttons: list) -> tuple[QWidget, QLabel]:
     """Jednakowy nagłówek każdej strony: tytuł, opis, przyciski po prawej."""
     w = QWidget()
@@ -532,6 +558,16 @@ def page_header(title: str, subtitle: str, buttons: list) -> tuple[QWidget, QLab
     for b in buttons:
         h.addWidget(b, 0, Qt.AlignTop)
     return w, sub
+
+
+def flow_box(layout) -> QWidget:
+    """Opakowuje FlowLayout w widżet, żeby siatka znała wysokość po zawinięciu rzędów."""
+    w = QWidget()
+    w.setLayout(layout)
+    sp = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+    sp.setHeightForWidth(True)
+    w.setSizePolicy(sp)
+    return w
 
 
 def section_label(text: str) -> QLabel:
@@ -686,6 +722,8 @@ class MainWindow(QMainWindow):
         v.addWidget(hdr)
 
         split = QSplitter(Qt.Horizontal)
+        self.split = split
+        split.setChildrenCollapsible(False)
         v.addWidget(split, 1)
 
         # lewa strona
@@ -733,7 +771,7 @@ class MainWindow(QMainWindow):
             lambda it: it.data(Qt.UserRole) and QTimer.singleShot(0, lambda sid=it.data(Qt.UserRole): self.select_spot(sid)))
         ml.addWidget(self.mine_list)
         self.tabs.addTab(mine_w, "Moje")
-        self.tabs.setMinimumWidth(340)
+        self.tabs.setMinimumWidth(260)
         split.addWidget(self.tabs)
 
         # ===== strona „Snajper”
@@ -759,11 +797,11 @@ class MainWindow(QMainWindow):
         right = QWidget()
         rl = QVBoxLayout(right)
         rl.setContentsMargins(16, 4, 4, 4)
-        head = QHBoxLayout()
         self.spot_title = QLabel("Wybierz resp z listy")
         self.spot_title.setStyleSheet("font-size:20px; font-weight:800;")
         self.spot_title.setWordWrap(True)
-        head.addWidget(self.spot_title, 1)
+        rl.addWidget(self.spot_title)
+        head = FlowLayout()
         self.open_btn = QPushButton("Otwórz na stronie")
         self.open_btn.clicked.connect(lambda: self.cur_spot and webbrowser.open(api.spot_url(self.guild, self.cur_spot)))
         head.addWidget(self.open_btn)
@@ -777,10 +815,12 @@ class MainWindow(QMainWindow):
         head.addWidget(self.watch_btn)
         rl.addLayout(head)
         self.spot_sub = QLabel("")
+        self.spot_sub.setWordWrap(True)
         self.spot_sub.setStyleSheet(f"color:{C_MUTED};")
         rl.addWidget(self.spot_sub)
 
         self.limit_lbl = QLabel("")
+        self.limit_lbl.setWordWrap(True)
         self.limit_lbl.setStyleSheet(f"color:{C_MUTED};")
         rl.addWidget(self.limit_lbl)
 
@@ -793,13 +833,16 @@ class MainWindow(QMainWindow):
                         f"<span style='color:#ffffff'>□</span> wybrany termin &nbsp; "
                         f"<span style='color:#9ca3af'>┆</span> ostatni możliwy początek &nbsp; — kliknij oś, aby wybrać godzinę")
         legend.setStyleSheet(f"color:{C_MUTED}; font-size:11px;")
+        legend.setWordWrap(True)
         rl.addWidget(legend)
 
-        lists = QHBoxLayout()
+        lists = QBoxLayout(QBoxLayout.LeftToRight)
+        self.lists_box = lists
         c1 = QVBoxLayout()
         c1.addWidget(self._h("Wolne okna · kliknij, aby wybrać"))
         self.free_list = QListWidget()
         self.free_list.setObjectName("rows")
+        self.free_list.setWordWrap(True)
         self.free_list.setSpacing(3)
         self.free_list.setCursor(Qt.PointingHandCursor)
         self.free_list.itemClicked.connect(self._free_clicked)
@@ -808,6 +851,7 @@ class MainWindow(QMainWindow):
         c2.addWidget(self._h("Nadchodzące rezerwacje"))
         self.res_list = QListWidget()
         self.res_list.setObjectName("rows")
+        self.res_list.setWordWrap(True)
         self.res_list.setSpacing(3)
         c2.addWidget(self.res_list)
         lists.addLayout(c1, 1)
@@ -822,10 +866,8 @@ class MainWindow(QMainWindow):
         ftitle = QLabel("Nowa rezerwacja")
         ftitle.setStyleSheet("font-size:14px; font-weight:800;")
         fl2.addWidget(ftitle)
-        grid = QGridLayout()
-        grid.setHorizontalSpacing(14)
-        grid.setVerticalSpacing(10)
-        grid.setColumnStretch(1, 1)
+        grid = QVBoxLayout()      # etykieta nad rzędem – rzędy mogą się zawijać przy wąskim oknie
+        grid.setSpacing(6)
 
         def row_label(t):
             l = QLabel(t)
@@ -834,7 +876,7 @@ class MainWindow(QMainWindow):
             return l
 
         # --- początek: dzień + godzina z przyciskami przesunięć
-        r1 = QHBoxLayout()
+        r1 = FlowLayout()
         r1.setSpacing(6)
         self.sday_group = QButtonGroup(self)
         self.sday_btns = []
@@ -876,11 +918,12 @@ class MainWindow(QMainWindow):
         self.asap_btn.clicked.connect(lambda: self._preselect_first_free())
         r1.addWidget(self.asap_btn)
         r1.addStretch(1)
-        grid.addWidget(row_label("Początek"), 0, 0)
-        grid.addLayout(r1, 0, 1)
+        grid.addWidget(row_label("Początek"))
+        grid.addLayout(r1)
+        grid.addSpacing(10)
 
         # --- długość: gotowe wartości + suwak do dokładnego ustawienia
-        r3 = QHBoxLayout()
+        r3 = FlowLayout()
         r3.setSpacing(6)
         self.len_group = QButtonGroup(self)
         self.len_group.setExclusive(False)
@@ -897,7 +940,7 @@ class MainWindow(QMainWindow):
         self.len_slider = QSlider(Qt.Horizontal)
         self.len_slider.setSingleStep(5)
         self.len_slider.setPageStep(15)
-        self.len_slider.setFixedWidth(220)
+        self.len_slider.setFixedWidth(170)
         self.len_slider.setToolTip("Dokładna długość (co 5 min)")
         self.len_slider.valueChanged.connect(self._len_slider_changed)
         r3.addWidget(self.len_slider)
@@ -907,11 +950,12 @@ class MainWindow(QMainWindow):
         self.len_lbl.setStyleSheet("font-weight:700;")
         r3.addWidget(self.len_lbl)
         r3.addStretch(1)
-        grid.addWidget(row_label("Długość"), 1, 0)
-        grid.addLayout(r3, 1, 1)
+        grid.addWidget(row_label("Długość"))
+        grid.addLayout(r3)
         self.cap_lbl = QLabel("")
+        self.cap_lbl.setWordWrap(True)
         self.cap_lbl.setStyleSheet(f"color:{C_MUTED}; font-size:11px;")
-        grid.addWidget(self.cap_lbl, 2, 1)
+        grid.addWidget(self.cap_lbl)
         fl2.addLayout(grid)
 
         line = QFrame()
@@ -938,6 +982,7 @@ class MainWindow(QMainWindow):
         r2.addWidget(self.book_btn, 0, Qt.AlignVCenter)
         fl2.addLayout(r2)
         hint = QLabel("Najwyżej 3 godziny, początek najwyżej dobę do przodu. Czas serwera (CET).")
+        hint.setWordWrap(True)
         hint.setStyleSheet(f"color:{C_MUTED}; font-size:11px;")
         fl2.addWidget(hint)
         rl.addWidget(form)
@@ -945,7 +990,7 @@ class MainWindow(QMainWindow):
         split.addWidget(right)
         split.setSizes([400, 880])
 
-        self.status_lbl = QLabel("")
+        self.status_lbl = ElidedLabel()   # długi tekst skraca się „…” zamiast poszerzać okno
         self.statusBar().addWidget(self.status_lbl, 1)
 
         # ===== strona „Hunty”
@@ -994,7 +1039,9 @@ class MainWindow(QMainWindow):
     def _build_sidebar(self) -> QWidget:
         side = QFrame()
         side.setObjectName("sidebar")
-        side.setFixedWidth(220)
+        side.setFixedWidth(240)
+        self.sidebar = side
+        self._compact_hide: list[QWidget] = []
         v = QVBoxLayout(side)
         v.setContentsMargins(14, 18, 14, 14)
         v.setSpacing(4)
@@ -1003,7 +1050,9 @@ class MainWindow(QMainWindow):
         logo = QLabel()
         if ICON_PATH.exists():
             logo.setPixmap(QIcon(str(ICON_PATH)).pixmap(40, 40))
-        brow.addWidget(logo, 0, Qt.AlignTop)
+        logo.setFixedSize(40, 40)
+        brow.addWidget(logo, 0, Qt.AlignLeft | Qt.AlignVCenter)   # na środku dwóch linijek nazwy
+        self._brand_row, self._logo = brow, logo
         brand = QLabel("Tibia Apps<br>Companion")
         brand.setStyleSheet("font-size:16px; font-weight:800; line-height:110%;")
         brow.addWidget(brand, 1)
@@ -1011,11 +1060,15 @@ class MainWindow(QMainWindow):
         tag = QLabel(f"respy · snajper · hunty · v{VERSION}")
         tag.setStyleSheet(f"color:{C_MUTED}; font-size:11px;")
         v.addWidget(tag)
+        self._compact_hide += [brand, tag]
         v.addSpacing(18)
         self.nav_group = QButtonGroup(self)
         self.nav_btns = []
         for i, (icon, name) in enumerate((("📅", "Respy"), ("🎯", "Snajper"), ("📤", "Hunty"))):
             b = QPushButton(f"{icon}   {name}")
+            b.setProperty("full", f"{icon}   {name}")
+            b.setProperty("short", icon)
+            b.setToolTip(name)
             b.setObjectName("nav")
             b.setCheckable(True)
             self.nav_group.addButton(b, i)
@@ -1024,7 +1077,15 @@ class MainWindow(QMainWindow):
         self.nav_group.idClicked.connect(self.go_page)
         v.addStretch(1)
 
-        v.addWidget(section_label("Konta"))
+        lbl_today = section_label("Dziś")
+        v.addWidget(lbl_today)
+        from today import TodayWidget
+        self.today = TodayWidget(self.cfg.dir / "today", now_server, lambda m: self.log(m, "Dziś"))
+        v.addWidget(self.today)
+        v.addSpacing(8)
+        lbl_acc = section_label("Konta")
+        v.addWidget(lbl_acc)
+        self._compact_hide += [lbl_today, lbl_acc]
         self.acc_widgets = {}
         for key in ("tibia", "hunt"):
             row = QPushButton()
@@ -1045,6 +1106,7 @@ class MainWindow(QMainWindow):
                 l.setAttribute(Qt.WA_TransparentForMouseEvents)
             col.addWidget(nm)
             col.addWidget(st)
+            self._compact_hide += [nm, st]
             rl.addLayout(col, 1)
             v.addWidget(row)
             self.acc_widgets[key] = (row, dot, st)
@@ -1056,6 +1118,10 @@ class MainWindow(QMainWindow):
         self.update_btn.clicked.connect(lambda: self.pending_update and self.install_update(self.pending_update))
         v.addWidget(self.update_btn)
         sett = QPushButton("⚙   Ustawienia")
+        sett.setProperty("full", "⚙   Ustawienia")
+        sett.setProperty("short", "⚙")
+        sett.setToolTip("Ustawienia")
+        self.sett_btn = sett
         sett.setObjectName("nav")
         sett.clicked.connect(lambda: self.open_settings())
         v.addWidget(sett)
@@ -1063,7 +1129,52 @@ class MainWindow(QMainWindow):
         self.clock_lbl = QLabel()
         self.clock_lbl.setStyleSheet(f"color:{C_MUTED}; font-size:11px;")
         v.addWidget(self.clock_lbl)
+        self._compact_hide.append(self.clock_lbl)
+        self._side_layout = v
         return side
+
+    # ---------- układ zależny od szerokości okna
+    COMPACT_SIDEBAR_BELOW = 1150   # szerokość okna, poniżej której pasek boczny pokazuje same ikony
+    STACK_BELOW = 980              # szerokość strony, poniżej której panele układają się pionowo
+
+    def _apply_responsive(self):
+        if not hasattr(self, "sidebar"):
+            return
+        compact = self.width() < self.COMPACT_SIDEBAR_BELOW
+        if getattr(self, "_compact", None) != compact:
+            self._compact = compact
+            self.sidebar.setFixedWidth(78 if compact else 240)
+            self._side_layout.setContentsMargins(7 if compact else 14, 18, 7 if compact else 14, 14)
+            for w in self._compact_hide:
+                w.setVisible(not compact)
+            # zwinięty pasek: logo na środku, w jednej linii z ikonami menu
+            self._brand_row.setAlignment(self._logo, (Qt.AlignHCenter if compact else Qt.AlignLeft) | Qt.AlignVCenter)
+            for b in self.nav_btns + [self.sett_btn]:
+                b.setText(b.property("short") if compact else b.property("full"))
+                b.setStyleSheet("text-align:center; font-size:18px;" if compact else "")
+            for row, dot, st in self.acc_widgets.values():
+                row.setMinimumHeight(40 if compact else 48)
+            self.today.set_vertical(compact)
+            self._paint_update_btn()
+        page_w = self.width() - self.sidebar.width()
+        stacked = page_w < self.STACK_BELOW
+        if getattr(self, "_stacked", None) != stacked:
+            self._stacked = stacked
+            self.split.setOrientation(Qt.Vertical if stacked else Qt.Horizontal)
+            if stacked:
+                self.split.setSizes([260, 900])
+            else:
+                self.split.setSizes([400, 880])
+        if self.hunt:
+            self.hunt.set_stacked(page_w < 900)
+        self.lists_box.setDirection(QBoxLayout.TopToBottom if page_w < 760 else QBoxLayout.LeftToRight)
+
+    def _paint_update_btn(self):
+        rel = getattr(self, "pending_update", None)
+        if rel is None:
+            return
+        self.update_btn.setText("⬆" if getattr(self, "_compact", False) else f"⬆   Aktualizacja {rel.version}")
+        self.update_btn.setToolTip(f"Aktualizacja {rel.version}")
 
     def go_page(self, i: int):
         i = max(0, min(int(i), 2))
@@ -1198,8 +1309,8 @@ class MainWindow(QMainWindow):
                 if not silent:
                     self.log(f"✔ Masz najnowszą wersję ({VERSION}).", "Aktualizacje")
             else:
-                self.update_btn.setText(f"⬆   Aktualizacja {rel.version}")
                 self.update_btn.setVisible(True)
+                self._paint_update_btn()
                 self.log(f"Dostępna nowa wersja {rel.version} (masz {VERSION}).", "Aktualizacje", "info")
                 if rel.version not in self._update_asked:
                     self._update_asked.add(rel.version)
@@ -2022,9 +2133,24 @@ class MainWindow(QMainWindow):
         QMessageBox.warning(self, "Błąd", str(e))
         self._on_time_changed()
 
+    def changeEvent(self, ev):
+        # podpowiedź „Dziś” nie może zostać na ekranie, gdy okno traci fokus lub się minimalizuje
+        if getattr(self, "today", None) and ev.type() in (QEvent.ActivationChange, QEvent.WindowStateChange):
+            if not self.isActiveWindow() or self.isMinimized():
+                self.today.hide_card()
+        super().changeEvent(ev)
+
+    def resizeEvent(self, ev):
+        if getattr(self, "today", None):
+            self.today.hide_card()
+        super().resizeEvent(ev)
+        self._apply_responsive()
+
     def closeEvent(self, ev):
         if getattr(self, "hunt", None):
             self.hunt.shutdown()
+        if getattr(self, "today", None):
+            self.today.card.close()
         if self.web:  # strony muszą zniknąć przed profilem przeglądarki
             self.web.close_pages()
         super().closeEvent(ev)
@@ -2044,6 +2170,8 @@ QPushButton#nav:checked {{ background: rgba(249,115,22,0.14); color: {C_ACCENT};
 QPushButton#update {{ text-align: left; padding: 9px 12px; border-radius: 8px; font-weight: 700; color: #111;
                      background: {C_FREE}; border: none; }}
 QPushButton#update:hover {{ background: #4ade80; }}
+QLabel#todayTile {{ background: {C_PANEL}; border: 1px solid {C_BORDER}; border-radius: 10px; color: {C_MUTED}; font-weight: 700; }}
+QLabel#todayTile:hover {{ border-color: {C_ACCENT}; }}
 QPushButton#account {{ text-align: left; background: {C_PANEL}; border: 1px solid {C_BORDER}; border-radius: 8px; padding: 0; }}
 QPushButton#account:hover {{ border-color: #4a4d55; }}
 QListWidget#nav {{ background: transparent; border: none; outline: 0; }}

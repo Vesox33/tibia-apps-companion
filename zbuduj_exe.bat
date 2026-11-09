@@ -3,7 +3,8 @@ rem Buduje TibiaAppsCompanion.exe (folder dist\TibiaAppsCompanion). Uruchom w fo
 cd /d "%~dp0"
 if not exist .venv py -m venv .venv
 .venv\Scripts\pip install -r requirements.txt pyinstaller || goto :err
-.venv\Scripts\pyinstaller --noconfirm --clean --onedir --windowed --name TibiaAppsCompanion --icon assets\icon.ico ^
+.venv\Scripts\python tools\make_version_info.py || goto :err
+.venv\Scripts\pyinstaller --noconfirm --clean --onedir --windowed --noupx --version-file build\version_info.txt --name TibiaAppsCompanion --icon assets\icon.ico ^
   --add-data "assets;assets" ^
   --add-data "huntuploader\data;huntuploader/data" ^
   main.py || goto :err
