@@ -12,8 +12,9 @@ Aplikacja na Windows dla graczy Tibii. Pomaga rezerwować respy na **tibialoot.c
 - Powiadomienie, gdy ulubiony resp się zwolni.
 
 **Snajper**
-- **Snajp** rezerwuje termin w chwili, gdy strona go odblokuje. Może podążać za czyjąś rezerwacją: jeśli ktoś ją skróci albo usunie, snajp się przesunie, w ustawionych przez Ciebie widełkach.
-- **Obserwacja** gra dźwięk i pokazuje powiadomienie, gdy w wybranym przedziale zwolni się miejsce. Opcjonalnie od razu rezerwuje.
+- Jeden przycisk **Pilnuj** – tryb dobiera się sam z wybranych godzin.
+- Termin jeszcze zamknięty: rezerwacja w sekundzie, gdy strona go odblokuje (albo samo powiadomienie, jeśli tak wybierzesz). Może podążać za czyjąś rezerwacją: jeśli ktoś ją skróci albo usunie, termin się przesunie, w ustawionych przez Ciebie widełkach.
+- Termin zajęty: dźwięk i powiadomienie, gdy w wybranym przedziale zwolni się miejsce. Opcjonalnie od razu rezerwuje.
 
 **Hunty**
 - Przechwytuje „Copy to clipboard” z Hunt, Party Hunt i Input Analyzera.
@@ -24,7 +25,13 @@ Aplikacja na Windows dla graczy Tibii. Pomaga rezerwować respy na **tibialoot.c
 
 **Dziś** (pasek boczny)
 - Boosted creature i boosted boss: obrazek, a po najechaniu nazwa.
-- Rashid: po najechaniu mapa okolicy z zaznaczonym miejscem, nazwą miasta i opisem, gdzie dokładnie stoi. Zmiana następuje o server save.
+- Rashid: po najechaniu mapa okolicy, nazwa miasta i opis, gdzie dokładnie stoi. Zmiana następuje o server save.
+
+**Imbuementy**
+- Kalkulator kosztu Vampirism, Void i Strike (Basic / Intricate / Powerful), także dla kilku sztuk naraz.
+- Sprawdza wszystkie warianty: wszystko z marketu albo pakiet u Yany za Gold Tokeny (grupa 1, grupy 1–2, grupy 1–3) z resztą z marketu – i pokazuje najtańszy.
+- Pamięta ostatnio wpisane ceny. Ceny można wpisywać jak w grze: 1.5k, 45k, 1kk.
+- Opłata przy shrine jest zablokowana (wartości z gry); kłódka pozwala ją zmienić, gdyby CipSoft zmienił cennik.
 
 **Całość**
 - Jedno logowanie do obu stron, w okienku aplikacji. Aplikacja nie zna Twoich haseł.

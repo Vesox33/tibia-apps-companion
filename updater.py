@@ -131,9 +131,15 @@ def launch(new_root: Path) -> Path:
     bat.write_text(
         "@echo off\r\n"
         "chcp 65001 >nul\r\n"
+        "set n=0\r\n"
         ":wait\r\n"
-        f'tasklist /NH /FI "PID eq {os.getpid()}" 2>nul | find " {os.getpid()} " >nul && '
-        "(timeout /t 1 /nobreak >nul & goto wait)\r\n"
+        # czekamy, aż stara wersja się zamknie; po 30 s zamykamy ją na siłę
+        f'tasklist /NH /FI "PID eq {os.getpid()}" 2>nul | find "{os.getpid()}" >nul || goto copy\r\n'
+        "set /a n+=1\r\n"
+        f'if %n% GEQ 30 (taskkill /F /PID {os.getpid()} >nul 2>&1 & timeout /t 2 /nobreak >nul & goto copy)\r\n'
+        "timeout /t 1 /nobreak >nul\r\n"
+        "goto wait\r\n"
+        ":copy\r\n"
         # /E – kopiuj podfoldery; bez /MIR, żeby nie skasować np. .venv ani plików użytkownika
         f'robocopy "{new_root}" "{APP_DIR}" /E /R:10 /W:1 /NFL /NDL /NJH /NJS /NP >nul\r\n'
         f'if errorlevel 8 (echo {APP_DIR}> "{FAIL_MARKER}")\r\n'
@@ -141,7 +147,9 @@ def launch(new_root: Path) -> Path:
         f'rd /s /q "{work}" >nul 2>&1\r\n'
         '(goto) 2>nul & del "%~f0"\r\n',
         encoding="utf-8")
-    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(subprocess, "DETACHED_PROCESS", 0)
+    # tylko CREATE_NO_WINDOW: cmd dostaje niewidoczną konsolę, którą dziedziczą tasklist/find/robocopy.
+    # (DETACHED_PROCESS powodował, że każde z tych poleceń otwierało własne okno.)
+    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
     subprocess.Popen(["cmd", "/c", str(bat)], creationflags=flags, close_fds=True, cwd=tempfile.gettempdir())
     return bat
 

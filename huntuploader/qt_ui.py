@@ -11,12 +11,14 @@ import threading
 import time
 from pathlib import Path
 
-from PySide6.QtCore import QObject, Qt, QTimer, Signal
+from PySide6.QtCore import QObject, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QFont, QGuiApplication, QTextCursor
 from PySide6.QtWidgets import (QApplication, QBoxLayout, QButtonGroup, QCheckBox, QComboBox, QDialog, QFrame,
                                QGridLayout, QHBoxLayout, QLabel, QLineEdit, QMessageBox,
                                QPlainTextEdit, QPushButton, QRadioButton, QScrollArea,
                                QStackedWidget, QTabWidget, QVBoxLayout, QWidget)
+
+import theme as T
 
 from . import parser, spawns
 from .browser import PREY_TYPES, BrowserWorker, FillJob
@@ -32,24 +34,41 @@ EVENTS = ["Double XP", "Double Loot", "Rapid Respawn", "Double XP & Skill"]
 BROWSER_CHOICES = [("auto", "Automatycznie (Edge → Chrome → Brave → Chromium)"), ("msedge", "Microsoft Edge"),
                    ("chrome", "Google Chrome"), ("brave", "Brave"), ("chromium", "Chromium (Playwright)")]
 
-C = dict(text="#e7e7ea", muted="#8b8f98", ok="#22c55e", warn="#f59e0b", err="#ef4444", info="#38bdf8",
-         accent="#f97316")
+PREY_SHORT = {"Bonus Experience": "XP", "Damage Boost": "Damage", "Damage Reduction": "Reduction", "Improved Loot": "Loot"}
+LABEL_W = T.S6 * 4             # kolumna etykiet formularza – pola zaczynają się w jednej linii
 
 
 def colored(label: QLabel, role: str):
-    label.setStyleSheet(f"color:{C.get(role, C['text'])};")
+    T.set_role(label, role)
 
 
 def section(text: str) -> QLabel:
-    l = QLabel(text.upper())
-    l.setStyleSheet(f"color:{C['muted']}; font-size:11px; font-weight:700;")
-    return l
+    return T.caption(text)
 
 
 def small_btn(text: str) -> QPushButton:
-    b = QPushButton(text)
-    b.setObjectName("small")
-    return b
+    return T.button(text, kind="link")
+
+
+def fit_combo(cb: QComboBox, chars: int = 6):
+    """Lista rozwijana nie wymusza szerokości najdłuższej pozycji – dopasowuje się do miejsca."""
+    cb.setSizeAdjustPolicy(QComboBox.AdjustToMinimumContentsLengthWithIcon)
+    cb.setMinimumContentsLength(chars)
+    cb.setMinimumWidth(T.S6 * 3)
+    cb.view().setTextElideMode(Qt.ElideRight)
+
+
+def form_row(label_text, *widgets, stretch_last: bool = True) -> QWidget:
+    """Wiersz formularza: etykieta o stałej szerokości + pola."""
+    w = QWidget()
+    h = T.hbox(w, spacing=T.S2)
+    l = label_text if isinstance(label_text, QWidget) else T.label(label_text or "", "muted")
+    l.setFixedWidth(LABEL_W)
+    l.setMinimumHeight(T.CONTROL_H)
+    h.addWidget(l, 0, Qt.AlignTop)
+    for i, x in enumerate(widgets):
+        h.addWidget(x, 1 if (stretch_last and i == 0) else 0)
+    return w
 
 
 class _Bridge(QObject):
@@ -62,23 +81,27 @@ class PreyRow(QWidget):
     def __init__(self, ui: "HuntUploaderWidget", data=None):
         super().__init__()
         data = data or {}
-        lay = QHBoxLayout(self)
-        lay.setContentsMargins(0, 0, 0, 0)
+        lay = T.hbox(self, spacing=T.S2)       # mała tabela pod nagłówkiem „Preye” – na całą szerokość
         self.cb_type = QComboBox()
-        self.cb_type.addItems(list(PREY_TYPES))
-        self.cb_type.setCurrentText(data.get("type", PREY_TYPES[0]))
+        for t in PREY_TYPES:            # krótka nazwa na liście, pełna wartość (jak na stronie) w danych
+            self.cb_type.addItem(PREY_SHORT.get(t, t), t)
+            self.cb_type.setItemData(self.cb_type.count() - 1, t, Qt.ToolTipRole)
+        i = self.cb_type.findData(data.get("type", PREY_TYPES[0]))
+        self.cb_type.setCurrentIndex(max(i, 0))
+        self.cb_type.setFixedWidth(T.S6 * 4 + T.S2)
         lay.addWidget(self.cb_type)
         self.cb_level = QComboBox()
         self.cb_level.addItems([f"{i}★" for i in range(1, 11)])
         self.cb_level.setCurrentText(f"{data.get('level', 10)}★")
-        self.cb_level.setFixedWidth(64)
+        self.cb_level.setFixedWidth(T.S6 * 3 + T.S4)
         lay.addWidget(self.cb_level)
         self.cb_creature = QComboBox()
         self.cb_creature.setEditable(True)
+        for cb in (self.cb_type, self.cb_creature):
+            fit_combo(cb, 4)
         self.cb_creature.setCurrentText(data.get("creature", ""))
-        lay.addWidget(self.cb_creature, 1)
-        rm = small_btn("✕")
-        rm.setFixedWidth(30)
+        lay.addWidget(self.cb_creature, 5)
+        rm = T.icon_button("x", "Usuń ten prey")
         rm.clicked.connect(lambda: QTimer.singleShot(0, lambda: ui.remove_prey(self)))
         lay.addWidget(rm)
 
@@ -89,7 +112,7 @@ class PreyRow(QWidget):
         self.cb_creature.setCurrentText(cur or (names[0] if names else ""))
 
     def value(self) -> dict:
-        return {"type": self.cb_type.currentText(), "level": int(self.cb_level.currentText().rstrip("★") or 10),
+        return {"type": self.cb_type.currentData() or self.cb_type.currentText(), "level": int(self.cb_level.currentText().rstrip("★") or 10),
                 "creature": self.cb_creature.currentText().strip()}
 
 
@@ -128,33 +151,34 @@ class HuntUploaderWidget(QWidget):
 
     # ------------------------------------------------------------------ UI
     def _build(self):
-        v = QVBoxLayout(self)
-        v.setContentsMargins(0, 0, 0, 0)
+        v = T.vbox(self)
         body = QBoxLayout(QBoxLayout.LeftToRight)
         self.body = body
-        body.setSpacing(22)
+        body.setSpacing(T.S6)
         v.addLayout(body, 1)
 
         # --- lewa: analizatory
         self.nb = QTabWidget()
+        self.nb.setDocumentMode(True)
+        self.nb.setIconSize(QSize(T.ICON - 2, T.ICON - 2))
+        self.nb.tabBar().setElideMode(Qt.ElideRight)
+        self.nb.tabBar().setUsesScrollButtons(False)
         self.texts: dict[str, QPlainTextEdit] = {}
         self.text_info: dict[str, QLabel] = {}
         self.tab_index: dict[str, int] = {}
         self._debounce: dict[str, QTimer] = {}
-        mono = QFont("Cascadia Mono" if sys.platform == "win32" else "DejaVu Sans Mono", 9)
         for i, kind in enumerate((parser.HUNT, parser.PARTY, parser.INPUT)):
             w = QWidget()
-            wl = QVBoxLayout(w)
-            wl.setContentsMargins(0, 8, 0, 0)
+            wl = T.vbox(w, (0, T.S3, 0, 0), T.S2)
             t = QPlainTextEdit()
             t.setLineWrapMode(QPlainTextEdit.NoWrap)
-            t.setFont(mono)
-            t.setObjectName("analyzer")
+            t.setObjectName("mono")
+            t.setPlaceholderText("Analizator pojawi się tu sam po „Copy to clipboard” w grze – albo wklej go (Ctrl+V).")
             wl.addWidget(t, 1)
-            bar = QHBoxLayout()
-            info = QLabel("")
+            bar = T.hbox(spacing=T.S2)
+            info = T.label("", "hint")
             bar.addWidget(info, 1)
-            clr = small_btn("Wyczyść")
+            clr = T.button("Wyczyść", "x", "ghost")
             clr.clicked.connect(lambda _=False, k=kind: self.set_text(k, ""))
             bar.addWidget(clr)
             wl.addLayout(bar)
@@ -168,135 +192,112 @@ class HuntUploaderWidget(QWidget):
             timer.timeout.connect(lambda k=kind: self._on_text_changed(k))
             self._debounce[kind] = timer
             t.textChanged.connect(timer.start)
-        body.addWidget(self.nb, 5)
+        body.addWidget(self.nb, 1)
 
         # --- prawa: formularz (przewijany, gdy okno jest niskie)
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         right = QWidget()
         scroll.setWidget(right)
-        r = QVBoxLayout(right)
-        r.setContentsMargins(0, 0, 6, 0)
+        r = T.vbox(right, (0, T.S3 + T.CONTROL_H + 1, T.S2, 0), T.S3)   # pierwszy wiersz na wysokości pola tekstowego
 
-        r.addWidget(section("Spot"))
-        sf = QHBoxLayout()
         self.cb_spot = QComboBox()
+        self.cb_spot.setMinimumWidth(T.S6 * 4)
         self.cb_spot.currentIndexChanged.connect(lambda _: self._on_spot_selected())
-        sf.addWidget(self.cb_spot, 1)
         self.cb_floor = QComboBox()
-        self.cb_floor.setMinimumWidth(140)
         self.cb_floor.currentIndexChanged.connect(lambda _: self._update_name())
-        sf.addWidget(self.cb_floor)
-        r.addLayout(sf)
-        self.lbl_spot_info = QLabel("")
-        self.lbl_spot_info.setWordWrap(True)
-        colored(self.lbl_spot_info, "warn")
+        self.cb_spot.setPlaceholderText("rozpozna się z analizatora")
+        r.addWidget(form_row("Spot", self.cb_spot))
+        self._floor_row = form_row("Piętro", self.cb_floor)
+        self._floor_row.hide()
+        self.cb_floor.installEventFilter(self)      # wiersz „Piętro” widoczny razem z listą pięter
+        self.cb_floor.hide()
+        r.addWidget(self._floor_row)
+        self.lbl_spot_info = T.label("", "hint", "warn", wrap=True)
         self.lbl_spot_info.hide()
-        r.addWidget(self.lbl_spot_info)
+        self._spot_info_row = form_row("", self.lbl_spot_info)
+        self._spot_info_row.hide()
+        r.addWidget(self._spot_info_row)
+        self.lbl_spot_info.setMinimumHeight(0)
 
-        r.addSpacing(10)
-        r.addWidget(section("Nazwa huntu"))
-        nf = QHBoxLayout()
         self.ed_name = QLineEdit()
         self.ed_name.textEdited.connect(lambda _: setattr(self, "name_edited", True))
         self.ed_name.editingFinished.connect(self.refresh_template_choice)
-        nf.addWidget(self.ed_name, 1)
-        rs = small_btn("↺")
-        rs.setToolTip("Przywróć nazwę ze spotu")
+        rs = T.icon_button("undo", "Przywróć nazwę ze spotu")
         rs.clicked.connect(self._reset_name)
-        nf.addWidget(rs)
-        r.addLayout(nf)
+        r.addWidget(form_row("Nazwa huntu", self.ed_name, rs))
 
-        tf = QHBoxLayout()
-        self.lbl_template = QLabel("")
-        self.lbl_template.setWordWrap(True)
-        tf.addWidget(self.lbl_template, 1)
+        self.lbl_template = T.label("", "muted", wrap=True)
+        self.lbl_template.setMinimumHeight(T.CONTROL_H)
         self.btn_tpl_change = small_btn("zmień")
+        r.addWidget(form_row("Template", self.lbl_template, self.btn_tpl_change))
         self.btn_tpl_change.clicked.connect(self._toggle_template)
-        tf.addWidget(self.btn_tpl_change)
-        r.addLayout(tf)
-        self.tpl_row = QWidget()
-        tl = QHBoxLayout(self.tpl_row)
-        tl.setContentsMargins(0, 0, 0, 0)
         self.cb_template = QComboBox()
         self.cb_template.activated.connect(lambda _: self._on_template_manual())
-        tl.addWidget(self.cb_template, 1)
-        rf = small_btn("⟳")
-        rf.setToolTip("Odczytaj listę templatów ze strony")
+        rf = T.icon_button("refresh", "Odczytaj listę templatów ze strony")
         rf.clicked.connect(self.refresh_templates)
-        tl.addWidget(rf)
+        self.tpl_row = form_row("", self.cb_template, rf)
         self.tpl_row.hide()
         r.addWidget(self.tpl_row)
 
-        self.char_box = QWidget()
-        cl = QVBoxLayout(self.char_box)
-        cl.setContentsMargins(0, 10, 0, 0)
-        cl.addWidget(section("Postać"))
         self.cb_char = QComboBox()
         self.cb_char.activated.connect(lambda _: self._on_char_selected())
-        cl.addWidget(self.cb_char)
+        self.char_box = form_row("Postać", self.cb_char)
         r.addWidget(self.char_box)
 
-        ob = QHBoxLayout()
-        self.btn_prey = small_btn("+ Prey")
+        self.btn_prey = T.button("Prey", "plus")
         self.btn_prey.clicked.connect(self._toggle_prey)
-        ob.addWidget(self.btn_prey)
-        self.btn_extras = small_btn("+ Dodatki")
+        self.btn_extras = T.button("Dodatki", "plus")
         self.btn_extras.clicked.connect(self._toggle_extras)
-        ob.addWidget(self.btn_extras)
-        ob.addStretch(1)
-        r.addSpacing(10)
-        r.addLayout(ob)
+        opts = QWidget()
+        ol = T.hbox(opts, spacing=T.S2)
+        ol.addWidget(self.btn_prey)
+        ol.addWidget(self.btn_extras)
+        ol.addStretch(1)
+        r.addWidget(form_row("Opcjonalnie", opts))
 
         self.prey_box = QWidget()
-        pl = QVBoxLayout(self.prey_box)
-        pl.setContentsMargins(0, 8, 0, 0)
-        ph = QHBoxLayout()
-        ph.addWidget(section("Preye"))
-        ph.addStretch(1)
-        self.btn_add_prey = small_btn("+ dodaj")
+        pl = T.vbox(self.prey_box, spacing=T.S2)
+        self.btn_add_prey = small_btn("dodaj")
         self.btn_add_prey.clicked.connect(lambda: self.add_prey())
-        ph.addWidget(self.btn_add_prey)
         z = small_btn("zwiń")
         z.clicked.connect(self._toggle_prey)
-        ph.addWidget(z)
-        pl.addLayout(ph)
-        self.prey_list = QVBoxLayout()
+        ph = QWidget()
+        phl = T.hbox(ph, spacing=T.S2)
+        phl.addStretch(1)
+        phl.addWidget(self.btn_add_prey)
+        phl.addWidget(z)
+        pl.addWidget(form_row("Preye", ph))
+        self.prey_list = T.vbox(spacing=T.S2)
         pl.addLayout(self.prey_list)
         self.prey_box.hide()
         r.addWidget(self.prey_box)
 
         self.extras_box = QWidget()
-        xl = QVBoxLayout(self.extras_box)
-        xl.setContentsMargins(0, 8, 0, 0)
-        eh = QHBoxLayout()
-        eh.addWidget(section("Dodatki do opisu"))
-        eh.addStretch(1)
+        xl = T.vbox(self.extras_box, spacing=T.S2)
         z2 = small_btn("zwiń")
         z2.clicked.connect(self._toggle_extras)
-        eh.addWidget(z2)
-        xl.addLayout(eh)
-        g = QGridLayout()
+        eh = QWidget()
+        ehl = T.hbox(eh, spacing=T.S2)
+        ehl.addStretch(1)
+        ehl.addWidget(z2)
+        xl.addWidget(form_row("Dodatki", eh))
         self.chk_xp = QCheckBox("XP Boost")
-        g.addWidget(self.chk_xp, 0, 0)
-        self.chk_boosted = QCheckBox("Boosted creature")
-        g.addWidget(self.chk_boosted, 1, 0)
+        self.chk_boosted = QCheckBox("Boosted")
+        self.chk_boosted.setToolTip("Boosted creature")
         self.cb_boosted = QComboBox()
         self.cb_boosted.setEditable(True)
-        g.addWidget(self.cb_boosted, 1, 1)
         self.chk_event = QCheckBox("Event")
-        g.addWidget(self.chk_event, 2, 0)
         self.cb_event = QComboBox()
         self.cb_event.setEditable(True)
         self.cb_event.addItems(EVENTS)
-        g.addWidget(self.cb_event, 2, 1)
-        g.setColumnStretch(1, 1)
-        xl.addLayout(g)
-        self.lbl_extras = QLabel("")
-        self.lbl_extras.setWordWrap(True)
-        colored(self.lbl_extras, "muted")
-        xl.addWidget(self.lbl_extras)
+        xl.addWidget(form_row(self.chk_xp, QWidget()))
+        xl.addWidget(form_row(self.chk_boosted, self.cb_boosted))
+        xl.addWidget(form_row(self.chk_event, self.cb_event))
+        self.lbl_extras = T.label("", "hint", wrap=True)
+        xl.addWidget(form_row("", self.lbl_extras))
         for chk in (self.chk_xp, self.chk_boosted, self.chk_event):
             chk.toggled.connect(lambda _: self._update_extras())
         self.cb_boosted.currentTextChanged.connect(lambda t: self._update_extras(auto=self.chk_boosted if t.strip() else None))
@@ -305,24 +306,33 @@ class HuntUploaderWidget(QWidget):
         r.addWidget(self.extras_box)
 
         r.addStretch(1)
-        self.lbl_mode = QLabel("")
-        self.lbl_mode.setAlignment(Qt.AlignCenter)
+        self.lbl_mode = T.label("", "hint")
         r.addWidget(self.lbl_mode)
-        self.btn_send = QPushButton("Wypełnij formularz")
-        self.btn_send.setObjectName("primary")
-        self.btn_send.setMinimumHeight(42)
+        self.btn_send = T.button("Wypełnij formularz", kind="primary")
         self.btn_send.clicked.connect(self.send)
         r.addWidget(self.btn_send)
-        body.addWidget(scroll, 4)
+        body.addWidget(scroll, 1)
 
+        for cb in right.findChildren(QComboBox):
+            fit_combo(cb)
         for k in self.texts:
             self._set_info_empty(k)
         self._update_extras()
 
+    def eventFilter(self, obj, ev):
+        from PySide6.QtCore import QEvent
+        if obj is self.cb_floor and ev.type() in (QEvent.ShowToParent, QEvent.HideToParent):
+            self._floor_row.setVisible(ev.type() == QEvent.ShowToParent)
+        return super().eventFilter(obj, ev)
+
     @staticmethod
     def _tab_title(kind, filled):
-        short = {parser.HUNT: "Hunt Analyzer", parser.PARTY: "Party Hunt", parser.INPUT: "Input Analyzer"}[kind]
-        return f"{'●' if filled else '○'}  {short}"
+        return {parser.HUNT: "Hunt Analyzer", parser.PARTY: "Party Hunt", parser.INPUT: "Input Analyzer"}[kind]
+
+    def _set_tab(self, kind, filled):
+        i = self.tab_index[kind]
+        self.nb.setTabText(i, self._tab_title(kind, filled))
+        self.nb.setTabIcon(i, T.icon("check-circle", T.OK, T.ICON - 2) if filled else T.icon("dot", T.LINE_2, T.ICON - 2))
 
     # ------------------------------------------------------------------ ustawienia
     def set_stacked(self, stacked: bool):
@@ -377,9 +387,11 @@ class HuntUploaderWidget(QWidget):
 
     def _update_option_buttons(self):
         n = len(self.prey_rows)
-        self.btn_prey.setText(f"Prey ({n})" if n else "+ Prey")
+        self.btn_prey.setText(f"Prey · {n}" if n else "Prey")
+        self.btn_prey.setIcon(T.icon("check" if n else "plus"))
         x = sum(1 for c in (self.chk_xp, self.chk_boosted, self.chk_event) if c.isChecked())
-        self.btn_extras.setText(f"Dodatki ({x})" if x else "+ Dodatki")
+        self.btn_extras.setText(f"Dodatki · {x}" if x else "Dodatki")
+        self.btn_extras.setIcon(T.icon("check" if x else "plus"))
 
     # ------------------------------------------------------------------ preye
     def add_prey(self, data=None):
@@ -453,7 +465,7 @@ class HuntUploaderWidget(QWidget):
             "pusto – wklej tekst z analizatora (Ctrl+V)"
         self.text_info[kind].setText(hint)
         colored(self.text_info[kind], "muted")
-        self.nb.setTabText(self.tab_index[kind], self._tab_title(kind, False))
+        self._set_tab(kind, False)
 
     def _on_text_changed(self, kind):
         text = self.get_text(kind)
@@ -464,10 +476,10 @@ class HuntUploaderWidget(QWidget):
             dup = self.history.find([parser.fingerprint(text)])
             info = sess or f"{len(text.splitlines())} linii"
             if dup:
-                info = f"⚠ już wysłany ({dup.get('sent_at', '')}) · " + info
+                info = f"Już wysłany ({dup.get('sent_at', '')}) · " + info
             self.text_info[kind].setText(info)
             colored(self.text_info[kind], "err" if dup else "ok")
-            self.nb.setTabText(self.tab_index[kind], self._tab_title(kind, True))
+            self._set_tab(kind, True)
         if kind == parser.HUNT and text != self._detected_text:
             self._detected_text = text
             self.detect_spot()
@@ -553,6 +565,7 @@ class HuntUploaderWidget(QWidget):
     def _spot_info(self, text):
         self.lbl_spot_info.setText(text)
         self.lbl_spot_info.setVisible(bool(text))
+        self._spot_info_row.setVisible(bool(text))
 
     def current_spot(self):
         if not self.detect or not self.detect.candidates:
@@ -630,21 +643,21 @@ class HuntUploaderWidget(QWidget):
         t = self.cb_template.currentText()
         role = "info"
         if not self.settings.use_templates:
-            msg, role = "Templaty wyłączone w ustawieniach", "muted"
+            msg, role = "wyłączone w ustawieniach", "muted"
             self.tpl_row.hide()
             self.btn_tpl_change.hide()
         else:
             self.btn_tpl_change.show()
             if t and t != NO_TEMPLATE and self.settings.templates and t not in self.settings.templates:
-                msg, role = f"Template „{t}” nie istnieje już na stronie", "err"
+                msg, role = f"„{t}” nie istnieje już na stronie", "err"
             elif t and t != NO_TEMPLATE:
-                msg = f"Template: {t}" + (" (wybrany ręcznie)" if self.template_manual else "")
+                msg = t + (" (wybrany ręcznie)" if self.template_manual else "")
             elif self.template_manual:
-                msg, role = "Template: brak (wybrane ręcznie)", "muted"
+                msg, role = "brak (wybrane ręcznie)", "muted"
             elif not self.settings.templates:
-                msg, role = "Template: lista zostanie pobrana przy wypełnianiu", "muted"
+                msg, role = "lista zostanie pobrana przy wypełnianiu", "muted"
             else:
-                msg, role = "Template: brak dla tego spotu", "muted"
+                msg, role = "brak dla tego spotu", "muted"
         self.lbl_template.setText(msg)
         colored(self.lbl_template, role)
 
@@ -670,19 +683,17 @@ class HuntUploaderWidget(QWidget):
             threading.Thread(target=work, daemon=True).start()
 
     def _ask(self, title, text, warn=False) -> bool:
-        icon = QMessageBox.Warning if warn else QMessageBox.Question
-        box = QMessageBox(icon, title, text, QMessageBox.Yes | QMessageBox.No, self)
-        return box.exec() == QMessageBox.Yes
+        return T.ask(self, title, text, warn=warn) == QMessageBox.Yes
 
     def send(self):
         s = self.settings
         if self.floor_missing():
-            QMessageBox.warning(self, "Piętro", "Wybierz piętro albo „(bez piętra)”.")
+            T.warn(self, "Piętro", "Wybierz piętro albo „(bez piętra)”.")
             self.cb_floor.setFocus()
             return
         party, hunt, inp = (self.get_text(k) for k in (parser.PARTY, parser.HUNT, parser.INPUT))
         if not party and not hunt:
-            QMessageBox.warning(self, "Brak danych", "Potrzebny jest Party Hunt Analyzer albo Hunt Analyzer.")
+            T.warn(self, "Brak danych", "Potrzebny jest Party Hunt Analyzer albo Hunt Analyzer.")
             return
         name = self.ed_name.text().strip()
         if not name and not self._ask("Brak nazwy", "Nazwa huntu jest pusta. Kontynuować?"):
@@ -699,10 +710,10 @@ class HuntUploaderWidget(QWidget):
         preys = [row.value() for row in self.prey_rows]
         for i, pr in enumerate(preys, 1):
             if not pr["creature"]:
-                QMessageBox.warning(self, "Prey", f"Prey {i}: wybierz albo wpisz potwora.")
+                T.warn(self, "Prey", f"Prey {i}: wybierz albo wpisz potwora.")
                 return
         if self.chk_boosted.isChecked() and not self.cb_boosted.currentText().strip():
-            QMessageBox.warning(self, "Boosted creature", "Zaznaczono „Boosted creature”, ale nie wybrano potwora.")
+            T.warn(self, "Boosted creature", "Zaznaczono „Boosted creature”, ale nie wybrano potwora.")
             return
         tpl = self.cb_template.currentText()
         sp = self.current_spot()
@@ -747,7 +758,7 @@ class HuntUploaderWidget(QWidget):
             self.refresh_template_choice()
         elif kind == "fill_aborted":
             self.status("Wypełnianie przerwane", "err")
-            QMessageBox.warning(self, "Formularz nie został wypełniony", p.get("msg", ""))
+            T.warn(self, "Formularz nie został wypełniony", p.get("msg", ""))
         elif kind == "template_used":
             self.log(f"Template: „{p['name']}”." if p.get("name") else "Bez templatu.")
         elif kind == "saved":

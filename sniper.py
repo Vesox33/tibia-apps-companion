@@ -9,11 +9,11 @@ import wave
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QTime, Signal
-from PySide6.QtWidgets import (QApplication, QButtonGroup, QCheckBox, QComboBox, QDialog,
-                               QDialogButtonBox, QGridLayout, QHBoxLayout, QLabel, QPushButton,
-                               QVBoxLayout, QWidget)
+from PySide6.QtCore import QObject, Qt, QTime, QTimer, Signal
+from PySide6.QtWidgets import (QApplication, QButtonGroup, QCheckBox, QComboBox, QDialog, QFrame,
+                               QGridLayout, QLabel, QPushButton, QSizePolicy, QWidget)
 
+import theme as T
 from parser import Reservation
 from slots import HORIZON, MAX_LEN, booking_range, ceil_minutes, free_windows, start_limit
 
@@ -134,7 +134,10 @@ class Sniper(QObject):
                     j["prefetched"] = True
                     self.prefetch()
                 due = datetime.fromisoformat(j["next_try"]) if j.get("next_try") else fire_time(dt(j["start"]))
-                if now >= due:
+                if now >= due and j.get("notify_only"):
+                    self._opened(j)
+                    dirty = True
+                elif now >= due:
                     self._fire(j, now)
                 elif dt(j["start"]) < now:
                     j["status"], j["msg"] = "expired", "Termin minął."
@@ -208,6 +211,18 @@ class Sniper(QObject):
             if s <= r.end and e >= r.start and not (me and me in r.authors):
                 return r
         return None
+
+    def _opened(self, j):
+        """Snajp „tylko powiadom”: termin właśnie się otworzył – dźwięk i okno z „Pokaż i wybierz”."""
+        s, e = dt(j["start"]), dt(j["end"])
+        r = self._conflict(j["spot_id"], s, e)
+        j["status"] = "done"
+        if r:
+            j["msg"] = f"Termin się otworzył, ale jest już zajęty: {r.label} {r.who}"
+            self.notify("Termin się otworzył", f"{j['spot_name']}: {j['msg']}", j, None)
+        else:
+            j["msg"] = f"Termin się otworzył ({s:%d.%m %H:%M}–{e:%H:%M}) – powiadomiono."
+            self.notify("Termin się otworzył!", f"{j['spot_name']}: można rezerwować {s:%H:%M}–{e:%H:%M}.", j, (s, e))
 
     def _fire(self, j, now):
         s, e = dt(j["start"]), dt(j["end"])
@@ -285,40 +300,48 @@ class Sniper(QObject):
 
 # ---------------------------------------------------------------- okno tworzenia
 class SnipeDialog(QDialog):
+    """Jedno okno „Pilnuj terminu”. Tryb wybiera się sam z godziny:
+    - termin jeszcze zamknięty (dalej niż doba) → snajp: rezerwacja (albo samo powiadomienie) w sekundzie otwarcia,
+    - termin już otwarty, ale zajęty → obserwacja: powiadomienie (albo rezerwacja), gdy ktoś go zwolni."""
+
     def __init__(self, parent, kind: str, spot_name: str, res: list[Reservation], now: datetime,
                  time_field_cls, preset: tuple[datetime, datetime] | None = None):
         super().__init__(parent)
-        self.kind, self.res, self.now = kind, res, now
+        self.res, self.now = res, now
+        self.kind = "snipe"
         self.anchor = None
         self.bounds = (None, None)
         self._last_anchor_id = None
-        self.setWindowTitle("Snajpuj termin" if kind == "snipe" else "Obserwuj zwolnienie")
-        self.setMinimumWidth(560)
-        v = QVBoxLayout(self)
-        title = QLabel(spot_name)
-        title.setStyleSheet("font-size:16px; font-weight:800;")
-        v.addWidget(title)
-        expl = QLabel(
-            "Aplikacja zarezerwuje ten termin w pierwszej chwili, gdy strona na to pozwoli "
-            "(dokładnie dobę przed jego początkiem). Program musi być wtedy włączony."
-            if kind == "snipe" else
-            "Gdy w wybranym przedziale zwolni się miejsce, dostaniesz dźwięk i powiadomienie. "
-            "Sprawdzam przy każdym odświeżeniu tablicy. Program musi być włączony.")
-        expl.setWordWrap(True)
-        expl.setStyleSheet("color:#8b8f98;")
-        v.addWidget(expl)
+        self._auto_touched = False
+        self.result = None
+        self.setWindowTitle("Pilnuj terminu")
+        self.setMinimumWidth(T.S6 * 24)
+        v = T.vbox(self, (T.S6, T.S6, T.S6, T.S6), T.S4)
+        head = T.vbox(spacing=T.S1)
+        head.addWidget(T.label("Pilnuj terminu · " + spot_name, "title", wrap=True))
+        head.addWidget(T.label("Termin, który jeszcze się nie otworzył, zarezerwuję w sekundzie otwarcia (dobę "
+                               "wcześniej). Zajęty termin będę obserwować i dam znać, gdy ktoś go zwolni. "
+                               "Program musi być wtedy włączony.", "muted", wrap=True))
+        v.addLayout(head)
 
         g = QGridLayout()
-        g.setHorizontalSpacing(10)
-        g.setVerticalSpacing(10)
+        g.setHorizontalSpacing(T.S3)
+        g.setVerticalSpacing(T.S3)
+        g.setColumnMinimumWidth(0, T.S6 * 4)
         row = 0
-        g.addWidget(QLabel("Dzień"), row, 0)
-        dl = QHBoxLayout()
+
+        def lab(text):
+            l = T.label(text, "muted")
+            l.setFixedHeight(T.CONTROL_H)
+            return l
+        g.addWidget(lab("Dzień"), row, 0, Qt.AlignTop)
+        dl = T.hbox(spacing=T.S2)
         self.day_group = QButtonGroup(self)
         for i in range(3):
             d = now.date() + timedelta(days=i)
-            b = QPushButton(f"{['Dziś', 'Jutro', 'Pojutrze'][i]}  {d:%d.%m}")
+            b = QPushButton(f"{['Dziś', 'Jutro', 'Pojutrze'][i]} {d:%d.%m}")
             b.setCheckable(True)
+            b.setCursor(Qt.PointingHandCursor)
             b.setObjectName("seg")
             self.day_group.addButton(b, i)
             dl.addWidget(b)
@@ -327,114 +350,112 @@ class SnipeDialog(QDialog):
         row += 1
 
         self.t1 = time_field_cls()
-        self.t1.setFixedWidth(84)
-        self.t1.setObjectName("bigtime")
         self.t2 = time_field_cls()
-        self.t2.setFixedWidth(84)
-        self.t2.setObjectName("bigtime")
+        g.addWidget(lab("Godziny"), row, 0, Qt.AlignTop)
+        tl = T.hbox(spacing=T.S2)
+        tl.addWidget(self.t1)
+        tl.addWidget(T.label("–", "muted"))
+        tl.addWidget(self.t2)
+        tl.addStretch(1)
+        g.addLayout(tl, row, 1)
+        row += 1
+
+        self.len_lab = lab("Min. wolne")
         self.len_combo = QComboBox()
+        self.len_combo.setFixedWidth(T.S6 * 5)
         lens = list(range(15, 181, 15))
         for m in lens:
             self.len_combo.addItem(fmt_len(m), m)
+        self.len_combo.setToolTip("Ile co najmniej musi się zwolnić, żeby dać znać")
+        g.addWidget(self.len_lab, row, 0, Qt.AlignTop)
+        g.addWidget(self.len_combo, row, 1, Qt.AlignLeft)
+        row += 1
 
-        if kind == "snipe":
-            g.addWidget(QLabel("Początek"), row, 0)
-            g.addWidget(self.t1, row, 1)
-            row += 1
-            g.addWidget(QLabel("Długość"), row, 0)
-            g.addWidget(self.len_combo, row, 1)
-            row += 1
-            # domyślnie: minutę po końcu pierwszej rezerwacji, której koniec wypada za limitem doby
-            lim = start_limit(now)
-            start = ceil_minutes(lim + timedelta(minutes=1), 5)
-            for r in sorted(res, key=lambda r: r.end):
-                if r.end + timedelta(minutes=1) > lim:
-                    start = r.end + timedelta(minutes=1)
-                    break
-            if preset and preset[0] and preset[0] > lim:
-                start = preset[0]
-            self.follow = QCheckBox("")
-            self.follow.setChecked(True)
-            self.follow.setStyleSheet("font-weight:600;")
-            g.addWidget(self.follow, row, 1)
-            row += 1
-            # widełki – gdy tamta rezerwacja zniknie/skróci się
-            self.range_box = QWidget()
-            rb = QVBoxLayout(self.range_box)
-            rb.setContentsMargins(22, 0, 0, 0)
-            rb.setSpacing(6)
-            rl = QLabel("Jeśli ją skróci, przesunie lub usunie, snajp się dostosuje. Interesuje mnie tylko:")
-            rl.setWordWrap(True)
-            rl.setStyleSheet("color:#8b8f98;")
-            rb.addWidget(rl)
-            r1 = QHBoxLayout()
-            self.floor_on = QCheckBox("najwcześniej od")
-            self.floor_t = time_field_cls()
-            self.floor_t.setFixedWidth(70)
-            self.floor_t.setObjectName("timefield")
-            r1.addWidget(self.floor_on)
-            r1.addWidget(self.floor_t)
-            r1.addSpacing(16)
-            self.cap_on = QCheckBox("najpóźniej do")
-            self.cap_t = time_field_cls()
-            self.cap_t.setFixedWidth(70)
-            self.cap_t.setObjectName("timefield")
-            r1.addWidget(self.cap_on)
-            r1.addWidget(self.cap_t)
-            r1.addStretch(1)
-            rb.addLayout(r1)
-            g.addWidget(self.range_box, row, 1)
-            row += 1
-            self.floor_t.set_time(QTime(start.hour, start.minute))
-            cap0 = start + MAX_LEN
-            self.cap_t.set_time(QTime(cap0.hour, cap0.minute))
-            for w in (self.floor_t, self.cap_t):
-                w.textChanged.connect(self._update)
-                w.stepped.connect(lambda m, w=w: self._step(w, m))
-            for c in (self.floor_on, self.cap_on, self.follow):
-                c.toggled.connect(self._update)
-            self._set_day(start)
-            self.t1.set_time(QTime(start.hour, start.minute))
-            self.len_combo.setCurrentIndex(len(lens) - 1)
-        else:
-            g.addWidget(QLabel("Od"), row, 0)
-            g.addWidget(self.t1, row, 1)
-            row += 1
-            g.addWidget(QLabel("Do"), row, 0)
-            g.addWidget(self.t2, row, 1)
-            row += 1
-            g.addWidget(QLabel("Min. wolne"), row, 0)
-            g.addWidget(self.len_combo, row, 1)
-            row += 1
-            self.auto = QCheckBox("Od razu zarezerwuj automatycznie (zamiast tylko powiadomić)")
-            g.addWidget(self.auto, row, 1)
-            row += 1
-            s, e = preset if preset else (ceil_minutes(now, 15), ceil_minutes(now, 15) + timedelta(hours=3))
-            self._set_day(s)
-            self.t1.set_time(QTime(s.hour, s.minute))
-            self.t2.set_time(QTime(e.hour, e.minute))
-            span = int((e - s).total_seconds() // 60)
-            best = max([i for i, m in enumerate(lens) if m <= max(span, 15)] or [0])
-            self.len_combo.setCurrentIndex(min(best, 3))   # domyślnie do 1 h
+        self.auto = QCheckBox("Zarezerwuj automatycznie")
+        self.auto.clicked.connect(self._auto_clicked)
+        g.addWidget(self.auto, row, 1)
+        row += 1
+
+        self.follow = QCheckBox("")
+        self.follow.setChecked(True)
+        g.addWidget(self.follow, row, 1)
+        row += 1
+        # widełki – gdy rezerwacja przed nim zniknie/skróci się
+        self.range_box = QWidget()
+        rb = T.vbox(self.range_box, (T.S6, 0, 0, 0), T.S2)
+        rb.addWidget(T.label("Jeśli ją skróci, przesunie lub usunie, dostosuję się. Interesuje mnie tylko:",
+                             "hint", wrap=True))
+        bg = QGridLayout()              # dwa wiersze: pola godzin w jednej kolumnie
+        bg.setHorizontalSpacing(T.S2)
+        bg.setVerticalSpacing(T.S2)
+        self.floor_on = QCheckBox("najwcześniej od")
+        self.floor_t = time_field_cls()
+        self.cap_on = QCheckBox("najpóźniej do")
+        self.cap_t = time_field_cls()
+        bg.addWidget(self.floor_on, 0, 0)
+        bg.addWidget(self.floor_t, 0, 1)
+        bg.addWidget(self.cap_on, 1, 0)
+        bg.addWidget(self.cap_t, 1, 1)
+        bg.setColumnStretch(2, 1)
+        rb.addLayout(bg)
+        g.addWidget(self.range_box, row, 1)
+        row += 1
+        g.setColumnStretch(1, 1)
         v.addLayout(g)
 
+        # domyślnie: termin, który otworzy się najwcześniej – minutę po końcu pierwszej rezerwacji za limitem doby
+        lim = start_limit(now)
+        start = ceil_minutes(lim + timedelta(minutes=1), 5)
+        for r in sorted(res, key=lambda r: r.end):
+            if r.end + timedelta(minutes=1) > lim:
+                start = r.end + timedelta(minutes=1)
+                break
+        end = start + MAX_LEN
+        if preset and preset[0] and preset[1]:
+            start, end = preset
+        self._set_day(start)
+        self.t1.set_time(QTime(start.hour, start.minute))
+        self.t2.set_time(QTime(end.hour, end.minute))
+        self.len_combo.setCurrentIndex(3)            # 1 h
+        self.floor_t.set_time(QTime(start.hour, start.minute))
+        cap0 = start + MAX_LEN
+        self.cap_t.set_time(QTime(cap0.hour, cap0.minute))
+
+        panel = QFrame()
+        panel.setObjectName("panel")
+        pl = T.hbox(panel, (T.S4, T.S3, T.S4, T.S3), T.S3)
+        self.info_icon = QLabel()
+        self.info_icon.setFixedSize(T.ICON, T.ICON)
+        pl.addWidget(self.info_icon, 0, Qt.AlignTop)
         self.info = QLabel("")
         self.info.setWordWrap(True)
-        self.info.setStyleSheet("font-weight:600;")
-        v.addWidget(self.info)
-        self.bb = QDialogButtonBox()
-        self.ok_btn = self.bb.addButton("Snajpuj" if kind == "snipe" else "Obserwuj", QDialogButtonBox.AcceptRole)
-        self.ok_btn.setObjectName("primary")
-        self.bb.addButton("Anuluj", QDialogButtonBox.RejectRole)
-        self.bb.accepted.connect(self.accept)
-        self.bb.rejected.connect(self.reject)
-        v.addWidget(self.bb)
+        self.info.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        pl.addWidget(self.info, 1)
+        panel.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+        v.addWidget(panel)
+        v.addStretch(1)
+        bb = T.hbox(spacing=T.S2)
+        bb.addStretch(1)
+        cancel = T.button("Anuluj")
+        cancel.clicked.connect(self.reject)
+        bb.addWidget(cancel)
+        self.ok_btn = T.button("Pilnuj", kind="primary")
+        self.ok_btn.setDefault(True)
+        self.ok_btn.clicked.connect(self.accept)
+        bb.addWidget(self.ok_btn)
+        v.addLayout(bb)
 
-        for w in (self.t1, self.t2):
+        for w in (self.t1, self.t2, self.floor_t, self.cap_t):
             w.textChanged.connect(self._update)
             w.stepped.connect(lambda m, w=w: self._step(w, m))
+        for c in (self.floor_on, self.cap_on, self.follow):
+            c.toggled.connect(self._update)
         self.len_combo.currentIndexChanged.connect(self._update)
         self.day_group.idClicked.connect(lambda _: self._update())
+        self._update()
+
+    def _auto_clicked(self):
+        self._auto_touched = True      # od teraz wybór użytkownika, a nie domyślny dla trybu
         self._update()
 
     def _set_day(self, d: datetime):
@@ -471,88 +492,119 @@ class SnipeDialog(QDialog):
         t1 = QTime.fromString(self.t1.text(), "HH:mm")
         t2 = QTime.fromString(self.t2.text(), "HH:mm")
         a = datetime(day.year, day.month, day.day, t1.hour(), t1.minute()) if t1.isValid() else None
-        if a and self.kind == "snipe" and any(r.end == a for r in self.res):
-            a += timedelta(minutes=1)   # wpisane „00:00” po rezerwacji do 00:00 → 00:01
         b = datetime(day.year, day.month, day.day, t2.hour(), t2.minute()) if t2.isValid() else None
         if a and b and b <= a:
             b += timedelta(days=1)
+        if a and a > start_limit(self.now) and any(r.end == a for r in self.res):
+            a += timedelta(minutes=1)   # wpisane „00:00” po rezerwacji do 00:00 → 00:01
         return a, b
 
     def _update(self, *_):
         now = self.now
         a, b = self._times()
-        mins = self.len_combo.currentData()
+        lim = start_limit(now)
         problem, text = None, ""
-        if a is None or (self.kind == "watch" and b is None):
-            problem = "Wpisz poprawną godzinę."
-        elif self.kind == "snipe":
-            e = a + timedelta(minutes=mins)
+        self.result = None
+        snipe = bool(a and a > lim)
+        self.kind = "snipe" if snipe else "watch"
+        if not self._auto_touched:        # domyślnie: zamknięty termin – rezerwuj, otwarty – tylko powiadom
+            self.auto.blockSignals(True)
+            self.auto.setChecked(snipe)
+            self.auto.blockSignals(False)
+        self.len_lab.setVisible(not snipe)
+        self.len_combo.setVisible(not snipe)
+        anchor = None
+        if a is None or b is None:
+            problem = "Wpisz poprawne godziny."
+        elif snipe:
+            e = min(b, a + MAX_LEN)
             nxt = next((r for r in sorted(self.res, key=lambda r: r.start) if r.start > a), None)
             if nxt and nxt.start <= e:
                 e = nxt.start - timedelta(minutes=1)
             clash = next((r for r in self.res if a <= r.end and e >= r.start), None)
             anchor = next((r for r in self.res if r.end + timedelta(minutes=1) == a), None)
-            self.anchor = anchor
-            self.follow.setVisible(anchor is not None)
-            self.range_box.setVisible(anchor is not None and self.follow.isChecked())
-            self.floor_t.setEnabled(self.floor_on.isChecked())
-            self.cap_t.setEnabled(self.cap_on.isChecked())
             if anchor and anchor.id != self._last_anchor_id:
                 self._last_anchor_id = anchor.id
                 if not self.floor_on.isChecked():
                     self.floor_t.set_time(QTime(anchor.start.hour, anchor.start.minute))
             if anchor:
                 self.follow.setText(f"Podążaj za rezerwacją {anchor.who} ({anchor.label})")
-                self.follow.setToolTip("Jeśli ją skróci, przesunie lub usunie, snajp się dostosuje.")
+                self.follow.setToolTip("Jeśli ją skróci, przesunie lub usunie, dostosuję termin.")
             following = anchor is not None and self.follow.isChecked()
             floor, cap = self._bounds(a, anchor) if following else (None, None)
             if cap:
                 e = min(e, cap)
             self.bounds = (floor, cap)
+            mins = int((e - a).total_seconds() // 60)
             if cap and floor and cap - floor < timedelta(minutes=15):
                 problem = "Widełki są za wąskie."
             elif cap and cap <= a:
-                problem = "„Najpóźniej do” musi być po początku snajpa."
-            elif a <= start_limit(now):
-                problem = "Ten termin można już zarezerwować normalnie – nie trzeba snajpić."
+                problem = "„Najpóźniej do” musi być po początku."
             elif clash or e <= a:
                 problem = f"Koliduje z rezerwacją {clash.label} ({clash.who})." if clash else "Brak miejsca."
+            elif mins < 15:
+                problem = "Za krótko – potrzeba co najmniej 15 minut."
             else:
                 ft = fire_time(a)
-                text = (f"Zarezerwuję {daytxt(a, now)} {a:%H:%M}–{e:%H:%M} ({fmt_len(int((e - a).total_seconds() // 60))}).<br>"
-                        f"Strzał: <b>{daytxt(ft, now)} o {ft:%H:%M}</b>"
-                        + (f" — przycięte do {e:%H:%M}, bo potem jest rezerwacja {nxt.who}" if nxt and nxt.start - timedelta(minutes=1) == e else ""))
+                what = "Zarezerwuję" if self.auto.isChecked() else "Dam znać o terminie"
+                text = (f"Termin otworzy się <span style='font-weight:{T.W_SEMI}'>{daytxt(ft, now)} o {ft:%H:%M}</span>. "
+                        f"{what} {daytxt(a, now)} {a:%H:%M}–{e:%H:%M} ({fmt_len(mins)}) w tej sekundzie"
+                        + (f" — przycięte do {e:%H:%M}, bo potem jest rezerwacja {nxt.who}"
+                           if nxt and nxt.start - timedelta(minutes=1) == e else "") + ".")
                 if following:
                     lo = floor or anchor.start
-                    text += (f"<br><span style='color:#8b8f98; font-weight:400'>Gdy {anchor.who} skróci lub usunie rezerwację: "
+                    text += (f"<br><span style='color:{T.TEXT_2}'>Gdy {anchor.who} skróci lub usunie rezerwację: "
                              f"najwcześniej {daytxt(lo, now)} {lo:%H:%M}"
                              + (f", najpóźniej do {daytxt(cap, now)} {cap:%H:%M}" if cap else "") + "</span>")
                 self.result = {"kind": "snipe", "start": iso(a), "end": iso(e), "want_len": mins}
         else:
+            mins = self.len_combo.currentData()
             if b <= now:
                 problem = "Ten przedział już minął."
             elif (b - a).total_seconds() / 60 < mins:
                 problem = "Przedział jest krótszy niż minimalny wolny czas."
             else:
-                text = (f"Szukam co najmniej {fmt_len(mins)} wolnego między {daytxt(a, now)} {a:%H:%M} "
-                        f"a {daytxt(b, now)} {b:%H:%M}.")
+                what = "zarezerwuję go od razu" if self.auto.isChecked() else "dam znać"
+                text = (f"Ten termin można już rezerwować. Gdy między {daytxt(a, now)} {a:%H:%M} a "
+                        f"{daytxt(b, now)} {b:%H:%M} zwolni się co najmniej {fmt_len(mins)}, {what}. "
+                        "Sprawdzam przy każdym odświeżeniu tablicy.")
                 self.result = {"kind": "watch", "from": iso(a), "to": iso(b), "min_len": mins}
+        self.anchor = anchor if snipe else None
+        self.follow.setVisible(snipe and anchor is not None)
+        self.range_box.setVisible(snipe and anchor is not None and self.follow.isChecked())
+        self.floor_t.setEnabled(self.floor_on.isChecked())
+        self.cap_t.setEnabled(self.cap_on.isChecked())
+        self.ok_btn.setText(("Zarezerwuj w chwili otwarcia" if self.auto.isChecked() else "Powiadom o otwarciu")
+                            if snipe else ("Obserwuj i rezerwuj" if self.auto.isChecked() else "Obserwuj"))
         if problem:
-            self.info.setText(f"<span style='color:#ef4444'>✕ {problem}</span>")
+            self.info.setText(f"<span style='color:{T.ERR}'>{problem}</span>")
+            self.info_icon.setPixmap(T.pixmap("alert-circle", T.ERR, T.ICON))
             self.ok_btn.setEnabled(False)
         else:
-            self.info.setText(f"<span style='color:#22c55e'>✓</span> {text}")
+            self.info.setText(text)
+            self.info_icon.setPixmap(T.pixmap("target" if snipe else "bell", T.TEXT_2, T.ICON))
             self.ok_btn.setEnabled(True)
+        QTimer.singleShot(0, self._fit_height)
+
+    def _fit_height(self):
+        """Okno rośnie, gdy pojawi się wiersz albo dłuższy opis – nic się nie ściska ani nie ucina."""
+        lay = self.layout()
+        need = lay.totalHeightForWidth(self.width()) if lay.hasHeightForWidth() else lay.totalSizeHint().height()
+        if need > self.height():
+            self.resize(self.width(), need)
 
     def job(self) -> dict:
         j = dict(self.result)
-        if self.kind == "watch":
+        if j["kind"] == "watch":
             j["auto"] = self.auto.isChecked()
-        elif self.anchor is not None and self.follow.isChecked():
-            j.update(follow=True, anchor_id=self.anchor.id, anchor_start=iso(self.anchor.start))
-            floor, cap = self.bounds
-            if floor:
-                j["floor"] = iso(floor)
-            if cap:
-                j["cap"] = iso(cap)
+        else:
+            if not self.auto.isChecked():
+                j["notify_only"] = True
+            if self.anchor is not None and self.follow.isChecked():
+                j.update(follow=True, anchor_id=self.anchor.id, anchor_start=iso(self.anchor.start))
+                floor, cap = self.bounds
+                if floor:
+                    j["floor"] = iso(floor)
+                if cap:
+                    j["cap"] = iso(cap)
         return j

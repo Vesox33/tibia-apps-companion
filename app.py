@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import gc
 import json
+import os
 import sys
 import traceback
 import webbrowser
@@ -23,6 +24,7 @@ from PySide6.QtWidgets import (QApplication, QButtonGroup, QDateEdit, QDateTimeE
 
 import api
 import paths
+import theme as T
 from flowlayout import FlowLayout
 import updater
 from version import UPDATE_REPO, VERSION
@@ -38,14 +40,7 @@ ICON_PATH = Path(__file__).with_name("assets") / "icon.png"
 DEFAULT_GUILD = "806152499760201738"
 TZ = ZoneInfo("Europe/Warsaw")   # „Czas serwera (CET)”
 
-C_BG = "#0f1012"
-C_PANEL = "#17181b"
-C_BORDER = "#2a2c31"
-C_TEXT = "#e7e7ea"
-C_MUTED = "#8b8f98"
-C_ACCENT = "#f97316"
-C_FREE = "#22c55e"
-C_MINE = "#38bdf8"
+# kolory, czcionki i odstępy: theme.py
 
 
 def fmt_len(mins: int) -> str:
@@ -313,36 +308,32 @@ class LoginDialog(QDialog):
         name, purpose = SITES[site]
         self.setWindowTitle(f"Logowanie – {name}")
         self.resize(1040, 780)
-        lay = QVBoxLayout(self)
-        lay.setContentsMargins(16, 14, 16, 14)
-        head = QHBoxLayout()
-        col = QVBoxLayout()
-        t = QLabel(f"Zaloguj się na {name}")
-        t.setStyleSheet("font-size:17px; font-weight:800;")
-        col.addWidget(t)
-        sub = QLabel(f"Do: {purpose}. Logujesz się bezpośrednio na stronie – aplikacja nie zna Twojego hasła. "
-                     "Gdy strona pokaże, że jesteś zalogowany, kliknij „Gotowe”.")
-        sub.setWordWrap(True)
-        sub.setStyleSheet(f"color:{C_MUTED};")
-        col.addWidget(sub)
-        head.addLayout(col, 1)
+        lay = T.vbox(self, (T.S6, T.S6, T.S6, T.S4), T.S4)
+        head = T.vbox(spacing=T.S1)
+        head.addWidget(T.label(f"Zaloguj się na {name}", "pageTitle"))
+        head.addWidget(T.label(f"Do: {purpose}. Logujesz się bezpośrednio na stronie – aplikacja nie zna Twojego "
+                               "hasła. Gdy strona pokaże, że jesteś zalogowany, kliknij „Gotowe”.", "muted", wrap=True))
         lay.addLayout(head)
-        self.addr = QLabel(url)
-        self.addr.setStyleSheet(f"color:{C_MUTED}; font-size:11px; background:{C_PANEL}; border:1px solid {C_BORDER};"
-                                "border-radius:6px; padding:4px 8px;")
-        lay.addWidget(self.addr)
+        bar = QFrame()
+        bar.setObjectName("panel")
+        bar.setFixedHeight(T.CONTROL_H)
+        bl = T.hbox(bar, (T.S3, 0, T.S3, 0), T.S2)
+        bl.addWidget(T.icon_label("lock", T.TEXT_3, 14))
+        self.addr = ElidedLabel(url)
+        T.set_role(self.addr, "muted")
+        bl.addWidget(self.addr, 1)
+        lay.addWidget(bar)
         self.view = QWebEngineView(self)
         self.view.setPage(QWebEnginePage(web.profile, self.view))
-        self.view.urlChanged.connect(lambda u: self.addr.setText("🔒 " + u.toString()))
+        self.view.urlChanged.connect(lambda u: self.addr.setText(u.toString()))
         self.view.load(QUrl(url))
         lay.addWidget(self.view, 1)
-        row = QHBoxLayout()
+        row = T.hbox(spacing=T.S2)
         row.addStretch(1)
-        c = QPushButton("Anuluj")
+        c = T.button("Anuluj")
         c.clicked.connect(self.reject)
         row.addWidget(c)
-        ok = QPushButton("Gotowe")
-        ok.setObjectName("primary")
+        ok = T.button("Gotowe", kind="primary")
         ok.clicked.connect(self.accept)
         row.addWidget(ok)
         lay.addLayout(row)
@@ -356,8 +347,9 @@ class Timeline(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.setMinimumHeight(96)
+        self.setFixedHeight(76)
         self.setMouseTracking(True)
+        self.setCursor(Qt.PointingHandCursor)
         self.res: list[Reservation] = []
         self.sel: tuple[datetime, datetime] | None = None
         self.me = ""
@@ -374,7 +366,7 @@ class Timeline(QWidget):
         return t0, t1
 
     def _bar(self) -> QRect:
-        return QRect(10, 22, self.width() - 20, 40)
+        return QRect(0, 20, self.width(), 32)
 
     def _x(self, dt: datetime) -> float:
         t0, t1 = self._range()
@@ -397,62 +389,66 @@ class Timeline(QWidget):
         now = now_server()
         lim = start_limit(now)
         p.setPen(Qt.NoPen)
-        p.setBrush(QColor(C_FREE).darker(260))
-        p.drawRoundedRect(r, 6, 6)
+        p.setBrush(QColor(T.TL_FREE))
+        p.drawRoundedRect(r, T.RADIUS, T.RADIUS)
+        p.setClipRect(r)
         # przeszłość (od pełnej godziny do teraz)
-        p.setBrush(QColor("#222327"))
         x = self._x(now)
+        p.setBrush(QColor(T.TL_PAST))
         p.drawRect(QRect(r.left(), r.top(), int(x - r.left()), r.height()))
         # za limitem początku – można tylko dokończyć rezerwację
         xl = self._x(lim)
-        p.setBrush(QColor(0, 0, 0, 110))
-        p.drawRect(QRect(int(xl), r.top(), int(r.right() - xl), r.height()))
-        p.setBrush(QBrush(QColor("#6b7280"), Qt.BDiagPattern))
-        p.drawRect(QRect(int(xl), r.top(), int(r.right() - xl), r.height()))
+        c = QColor(T.TL_LIMIT)
+        c.setAlpha(90)
+        p.setBrush(c)
+        p.drawRect(QRect(int(xl), r.top(), int(r.right() - xl) + 1, r.height()))
+        p.setBrush(QBrush(QColor(T.TL_HATCH), Qt.BDiagPattern))
+        p.drawRect(QRect(int(xl), r.top(), int(r.right() - xl) + 1, r.height()))
         for res in self.res:
             if res.end <= t0 or res.start >= t1:
                 continue
             x1, x2 = self._x(res.start), self._x(res.end)
             mine = self.me and self.me in res.authors
-            p.setBrush(QColor(C_MINE if mine else C_ACCENT))
-            p.drawRoundedRect(QRect(int(x1), r.top() + 3, max(int(x2 - x1), 2), r.height() - 6), 3, 3)
+            p.setBrush(QColor(T.INFO if mine else T.TL_TAKEN))
+            p.drawRoundedRect(QRect(int(x1), r.top() + 4, max(int(x2 - x1), 2), r.height() - 8), 4, 4)
         if self.sel:
             s, e = self.sel
             if e > t0 and s < t1:
-                p.setBrush(QColor(255, 255, 255, 40))
-                p.setPen(QPen(QColor("#ffffff"), 2))
+                sel = QColor(T.TL_SEL)
+                sel.setAlpha(36)
+                p.setBrush(sel)
+                p.setPen(QPen(QColor(T.TL_SEL), 2))
                 x1, x2 = self._x(s), self._x(e)
-                p.drawRoundedRect(QRect(int(x1), r.top(), max(int(x2 - x1), 2), r.height()), 3, 3)
-        p.setPen(QPen(QColor("#ef4444"), 2))
-        p.drawLine(int(x), r.top() - 4, int(x), r.bottom() + 4)
-        p.setPen(QPen(QColor("#9ca3af"), 1, Qt.DashLine))
-        p.drawLine(int(xl), r.top() - 4, int(xl), r.bottom() + 4)
+                p.drawRoundedRect(QRect(int(x1) + 1, r.top() + 1, max(int(x2 - x1) - 2, 2), r.height() - 2), 5, 5)
+        p.setClipping(False)
+        p.setPen(QPen(QColor(T.TL_NOW), 2))
+        p.drawLine(int(x), r.top() - 3, int(x), r.bottom() + 3)
+        p.setPen(QPen(QColor(T.TEXT_3), 1, Qt.DashLine))
+        p.drawLine(int(xl), r.top() - 3, int(xl), r.bottom() + 3)
 
         f = QFont(self.font())
-        f.setPointSizeF(8.5)
+        f.setPixelSize(T.FS_CAPTION)
         p.setFont(f)
+        fm = p.fontMetrics()
         hours = int((t1 - t0).total_seconds() // 3600)
+        step = 2 if r.width() / max(hours, 1) >= 14 else 4
         for i in range(hours + 1):
             t = t0 + timedelta(hours=i)
             xt = int(self._x(t))
             if t.hour == 0:
-                p.setPen(QPen(QColor(C_TEXT), 1))
-                p.drawLine(xt, r.top() - 2, xt, r.bottom() + 6)
-                fb = QFont(f)
-                fb.setBold(True)
-                p.setFont(fb)
-                p.drawText(QRect(xt + 4, 2, 120, 16), Qt.AlignLeft | Qt.AlignVCenter,
+                p.setPen(QPen(QColor(T.TEXT_3), 1))
+                p.drawLine(xt, r.top(), xt, r.bottom())
+                p.setPen(QColor(T.TEXT))
+                p.drawText(QRect(xt + 4, 0, 120, 16), Qt.AlignLeft | Qt.AlignVCenter,
                            f"{self.DAYS_PL[t.weekday()]} {t:%d.%m}")
-                p.setFont(f)
-            if t.hour % 2 == 0:
-                p.setPen(QColor(C_MUTED))
-                p.drawLine(xt, r.bottom() + 2, xt, r.bottom() + 6)
-                p.drawText(QRect(xt - 20, r.bottom() + 8, 40, 16), Qt.AlignCenter, f"{t.hour:02d}")
+            if t.hour % step == 0 and r.left() + 8 <= xt <= r.right() - 8:
+                p.setPen(QColor(T.TEXT_3))
+                p.drawText(QRect(xt - 20, r.bottom() + 6, 40, 16), Qt.AlignCenter, f"{t.hour:02d}")
         midnight = (t0 + timedelta(days=1)).replace(hour=0)
-        if t0.hour != 0 and self._x(midnight) - r.left() > 90:
-            p.setPen(QColor(C_MUTED))
-            p.drawText(QRect(r.left(), 2, 200, 16), Qt.AlignLeft | Qt.AlignVCenter,
-                       f"{self.DAYS_PL[t0.weekday()]} {t0:%d.%m}")
+        label = f"{self.DAYS_PL[t0.weekday()]} {t0:%d.%m}"
+        if t0.hour != 0 and self._x(midnight) - r.left() > fm.horizontalAdvance(label) + 16:
+            p.setPen(QColor(T.TEXT_2))
+            p.drawText(QRect(r.left(), 0, 200, 16), Qt.AlignLeft | Qt.AlignVCenter, label)
         p.end()
 
     def mouseMoveEvent(self, ev):
@@ -483,6 +479,8 @@ class TimeField(QLineEdit):
     def __init__(self):
         super().__init__()
         self.setInputMask("99:99")
+        self.setObjectName("time")
+        self.setFixedWidth(T.S6 * 3)
         self.setAlignment(Qt.AlignCenter)
         self.setToolTip("Wpisz godzinę i Enter • kółko myszy: ±5 min (Shift: ±1 h) • strzałki ↑↓")
         self.editingFinished.connect(self._commit)
@@ -540,24 +538,7 @@ class ElidedLabel(QLabel):
     def _elide(self):
         super().setText(self.fontMetrics().elidedText(self._full, Qt.ElideRight, max(self.width() - 4, 10)))
 
-def page_header(title: str, subtitle: str, buttons: list) -> tuple[QWidget, QLabel]:
-    """Jednakowy nagłówek każdej strony: tytuł, opis, przyciski po prawej."""
-    w = QWidget()
-    h = QHBoxLayout(w)
-    h.setContentsMargins(0, 0, 0, 12)
-    col = QVBoxLayout()
-    col.setSpacing(2)
-    t = QLabel(title)
-    t.setStyleSheet("font-size:22px; font-weight:800;")
-    col.addWidget(t)
-    sub = QLabel(subtitle)
-    sub.setWordWrap(True)
-    sub.setStyleSheet(f"color:{C_MUTED};")
-    col.addWidget(sub)
-    h.addLayout(col, 1)
-    for b in buttons:
-        h.addWidget(b, 0, Qt.AlignTop)
-    return w, sub
+page_header = T.page_header
 
 
 def flow_box(layout) -> QWidget:
@@ -570,67 +551,184 @@ def flow_box(layout) -> QWidget:
     return w
 
 
-def section_label(text: str) -> QLabel:
-    l = QLabel(text.upper())
-    l.setStyleSheet(f"color:{C_MUTED}; font-size:11px; font-weight:700; padding:6px 2px 2px 2px;")
-    return l
+class AutoList(QListWidget):
+    """Lista wierszy-widżetów, których wysokość zależy od szerokości (zawijany tekst) – przelicza się sama."""
 
-
-# ---------------------------------------------------------------- karta ulubionego respa
-def pill(text: str, color: str) -> QLabel:
-    l = QLabel(text)
-    c = QColor(color)
-    rgba = lambda a: f"rgba({c.red()},{c.green()},{c.blue()},{a})"
-    l.setStyleSheet(f"color:{color}; border:1px solid {rgba(0.35)}; background:{rgba(0.13)};"
-                    "border-radius:9px; padding:1px 8px; font-size:11px; font-weight:600;")
-    return l
-
-
-class SpotCard(QFrame):
-    def __init__(self, spot: Spot, me: str, on_unfav):
+    def __init__(self):
         super().__init__()
-        self.setObjectName("card")
-        lay = QVBoxLayout(self)
-        lay.setContentsMargins(12, 10, 12, 10)
-        lay.setSpacing(4)
-        top = QHBoxLayout()
-        name = QLabel(spot.name)
-        name.setStyleSheet("font-weight:700; font-size:14px;")
-        name.setWordWrap(True)
+        self.setVerticalScrollMode(QListWidget.ScrollPerPixel)
+        self._fix_timer = QTimer(self)
+        self._fix_timer.setSingleShot(True)
+        self._fix_timer.setInterval(0)
+        self._fix_timer.timeout.connect(self._fix_heights)
+
+    def schedule_fix(self):
+        self._fix_timer.start()
+
+    def resizeEvent(self, e):
+        super().resizeEvent(e)
+        self.schedule_fix()
+
+    def showEvent(self, e):
+        super().showEvent(e)
+        self.schedule_fix()
+
+    def _fix_heights(self):
+        w = self.viewport().width()
+        for i in range(self.count()):
+            it = self.item(i)
+            holder = self.itemWidget(it)
+            if holder is None:
+                continue
+            h = holder.heightForWidth(w) if holder.hasHeightForWidth() else holder.sizeHint().height()
+            if h > 0 and it.sizeHint().height() != h:
+                it.setSizeHint(QSize(10, h))
+
+
+def list_row(lst: QListWidget, widget: QWidget, data=None, gap: int = T.S2) -> QListWidgetItem:
+    """Wiersz listy jako widżet z odstępem pod spodem (zamiast ramek i separatorów)."""
+    holder = QWidget()
+    hl = T.vbox(holder, (0, 0, 0, gap))
+    hl.addWidget(widget)
+    it = QListWidgetItem()
+    if data is not None:
+        it.setData(Qt.UserRole, data)
+    it.setSizeHint(QSize(10, widget.sizeHint().height() + gap))
+    lst.addItem(it)
+    lst.setItemWidget(it, holder)
+    return it
+
+
+def row_widget(item: QListWidgetItem, lst: QListWidget) -> QWidget | None:
+    holder = lst.itemWidget(item)
+    if holder is None or holder.layout() is None or holder.layout().count() == 0:
+        return None
+    return holder.layout().itemAt(0).widget()
+
+
+def list_message(lst: QListWidget, text: str):
+    """Pusta lista: jedno zdanie, wyśrodkowane, bez ramki."""
+    it = QListWidgetItem(text)
+    it.setFlags(Qt.NoItemFlags)
+    it.setForeground(QColor(T.TEXT_3))
+    it.setTextAlignment(Qt.AlignCenter)
+    it.setSizeHint(QSize(10, T.S6 * 3))
+    lst.addItem(it)
+
+
+def repolish(w: QWidget, name: str):
+    if w.objectName() != name:
+        w.setObjectName(name)
+        w.style().unpolish(w)
+        w.style().polish(w)
+
+
+# ---------------------------------------------------------------- wiersz ulubionego respa
+class SpotCard(QFrame):
+    def __init__(self, spot: Spot, me: str, on_unfav, selected: bool = False):
+        super().__init__()
+        self.setObjectName("rowActive" if selected else "row")
+        self.setCursor(Qt.PointingHandCursor)
+        lay = T.vbox(self, (T.S3, T.S2, T.S1, T.S3), T.S1)
+        top = T.hbox(spacing=T.S2)
+        name = T.label(spot.name, "strong", wrap=True)
         top.addWidget(name, 1)
-        star = QPushButton("★")
-        star.setObjectName("star")
-        star.setToolTip("Usuń z ulubionych")
-        star.setFixedSize(28, 28)
+        star = T.icon_button("star-fill", "Usuń z ulubionych", color=T.TEXT_2)
         star.clicked.connect(lambda: QTimer.singleShot(0, lambda: on_unfav(spot.id)))
-        top.addWidget(star)
+        top.addWidget(star, 0, Qt.AlignTop)
         lay.addLayout(top)
-        row = QHBoxLayout()
         now = now_server()
         upcoming = [r for r in spot.reservations if r.end >= now]
         mine = [r for r in upcoming if me and me in r.authors]
+        st = T.hbox(spacing=T.S2)
         if spot.is_taken:
-            row.addWidget(pill("Zajęty", C_ACCENT))
-            row.addWidget(QLabel(f"{spot.holder}  {spot.holder_time}".strip()))
+            st.addWidget(_dot(T.TEXT_3))
+            st.addWidget(T.label(f"Zajęty · {spot.holder} {spot.holder_time}".strip(), "muted"), 1)
         elif spot.status:
-            row.addWidget(pill("Wolny", C_FREE))
+            st.addWidget(_dot(T.OK))
+            st.addWidget(T.label("Wolny", "muted"), 1)
         else:
-            row.addWidget(pill("?", C_MUTED))
-        row.addStretch(1)
-        lay.addLayout(row)
+            st.addWidget(_dot(T.TEXT_3))
+            st.addWidget(T.label("Status nieznany", "muted"), 1)
         future = [r for r in upcoming if r.start > now]
-        nxt = QLabel(("Następna: " + (f"{future[0].start:%d.%m} {future[0].label}  {future[0].who}"
-                                       if future else (spot.next_text or "brak"))))
-        nxt.setStyleSheet(f"color:{C_MUTED};")
-        lay.addWidget(nxt)
         if future:
-            cnt = QLabel(f"Zaplanowanych rezerwacji: {len(future)}")
-            cnt.setStyleSheet(f"color:{C_MUTED}; font-size:11px;")
-            lay.addWidget(cnt)
+            cnt = T.label(f"{len(future)} zaplan.", "hint")
+            cnt.setToolTip(f"Zaplanowanych rezerwacji: {len(future)}")
+            st.addWidget(cnt)
+        lay.addLayout(st)
+        if future:
+            d = (future[0].start.date() - now.date()).days
+            day = {0: "dziś", 1: "jutro"}.get(d, f"{future[0].start:%d.%m}")
+            nxt = f"Następna {day} {future[0].label} · {future[0].who}"
+        else:
+            nxt = f"Następna: {spot.next_text or 'brak'}"
+        lay.addWidget(T.label(nxt, "hint", wrap=True))
         if mine:
-            m = QLabel("Twoja: " + ", ".join(f"{r.start:%d.%m} {r.label}" for r in mine))
-            m.setStyleSheet(f"color:{C_MINE}; font-weight:600;")
+            def _d(r):
+                d = (r.start.date() - now.date()).days
+                return {0: "dziś", 1: "jutro"}.get(d, f"{r.start:%d.%m}")
+            m = T.label("Twoja: " + ", ".join(f"{_d(r)} {r.label}" for r in mine), "hint", "info", wrap=True)
             lay.addWidget(m)
+        for w in self.findChildren(QLabel):
+            w.setAttribute(Qt.WA_TransparentForMouseEvents)
+
+
+def _dot(color: str) -> QLabel:
+    l = QLabel()
+    l.setPixmap(T.dot(color, 8))
+    l.setFixedSize(8, 16)
+    l.setAlignment(Qt.AlignCenter)
+    return l
+
+
+class NavButton(QPushButton):
+    """Pozycja menu: ikona i tekst w stałych miejscach (ikona zawsze na tej samej osi, 12 px przerwy)."""
+
+    def __init__(self, icon_name: str, text: str, tone: str = T.TEXT_2):
+        super().__init__()
+        self.setObjectName("nav")
+        self.setCheckable(True)
+        self.setCursor(Qt.PointingHandCursor)
+        self._icon_name, self._tone = icon_name, tone
+        h = T.hbox(self, (T.S3, 0, T.S3, 0), T.S3)
+        self._ic = QLabel()
+        self._ic.setFixedSize(T.ICON_NAV, T.ICON_NAV)
+        self._txt = QLabel(text)
+        self._txt.setObjectName("strong")
+        for w in (self._ic, self._txt):
+            w.setAttribute(Qt.WA_TransparentForMouseEvents)
+        h.addWidget(self._ic)
+        h.addWidget(self._txt, 1)
+        self.setProperty("full", text)
+        self.setToolTip(text)
+        self.toggled.connect(lambda _: self._paint())
+        self._hover = False
+        self._paint()
+
+    def set_label(self, text: str):
+        self.setProperty("full", text)
+        self._txt.setText(text)
+
+    def set_compact(self, compact: bool, width: int = 0):
+        """Zwinięty pasek: sama ikona – na środku przycisku (stały rozmiar = wyśrodkowanie przez układ)."""
+        self._txt.setVisible(not compact)
+        self.layout().setContentsMargins(*((0, 0, 0, 0) if compact else (T.S3, 0, T.S3, 0)))
+
+    def enterEvent(self, e):
+        self._hover = True
+        self._paint()
+        super().enterEvent(e)
+
+    def leaveEvent(self, e):
+        self._hover = False
+        self._paint()
+        super().leaveEvent(e)
+
+    def _paint(self):
+        on = self.isChecked() or self._hover
+        color = T.TEXT if on else self._tone
+        self._ic.setPixmap(T.pixmap(self._icon_name, color, T.ICON_NAV))
+        self._txt.setStyleSheet(f"color: {color};")
 
 
 # ---------------------------------------------------------------- okno główne
@@ -693,7 +791,7 @@ class MainWindow(QMainWindow):
         self.cfg.save()
         if updater.FAIL_MARKER.exists():
             updater.FAIL_MARKER.unlink(missing_ok=True)
-            QTimer.singleShot(1000, lambda: QMessageBox.warning(
+            QTimer.singleShot(1000, lambda: T.warn(
                 self, "Aktualizacja", "Poprzednia aktualizacja się nie udała – część plików była zablokowana "
                 "(np. przez antywirusa albo drugie okno aplikacji). Spróbuj ponownie: Ustawienia → Aktualizacje."))
         QTimer.singleShot(900, self.refresh)  # chwila na wczytanie ciasteczek z profilu
@@ -713,9 +811,8 @@ class MainWindow(QMainWindow):
     def _build_ui(self):
         # ===== strona „Respy”
         root = QWidget()
-        v = QVBoxLayout(root)
-        v.setContentsMargins(0, 0, 0, 0)
-        self.refresh_btn = QPushButton("⟳  Odśwież")
+        v = T.vbox(root)
+        self.refresh_btn = T.button("Odśwież", "refresh")
         self.refresh_btn.clicked.connect(self.refresh)
         self.user_lbl = QLabel("")
         hdr, self.resp_sub = page_header("Respy", "Tablica rezerwacji tibialoot.com", [self.refresh_btn])
@@ -724,28 +821,30 @@ class MainWindow(QMainWindow):
         split = QSplitter(Qt.Horizontal)
         self.split = split
         split.setChildrenCollapsible(False)
+        split.setHandleWidth(T.S6)
         v.addWidget(split, 1)
 
-        # lewa strona
+        # lewa strona – listy respów
         self.tabs = QTabWidget()
+        self.tabs.setDocumentMode(True)
         fav_w = QWidget()
-        fl = QVBoxLayout(fav_w)
-        fl.setContentsMargins(0, 8, 0, 0)
-        self.fav_list = QListWidget()
-        self.fav_list.setSpacing(4)
+        fl = T.vbox(fav_w, (0, T.S3, 0, 0))
+        self.fav_list = AutoList()
         self.fav_list.itemClicked.connect(lambda it: QTimer.singleShot(0, lambda sid=it.data(Qt.UserRole): self.select_spot(sid)))
         fl.addWidget(self.fav_list)
-        self.fav_empty = QLabel("Nie masz ulubionych respów.\nW zakładce „Wszystkie” kliknij ☆ przy respie.")
-        self.fav_empty.setAlignment(Qt.AlignCenter)
-        self.fav_empty.setStyleSheet(f"color:{C_MUTED};")
+        login_btn = T.button("Zaloguj się")
+        login_btn.clicked.connect(lambda: self.login_site("tibia"))
+        self.fav_empty = T.EmptyState("user", "Zaloguj się na tibialoot.com",
+                                      "Respy i rezerwacje pojawią się po zalogowaniu.", login_btn)
+        self.fav_list.hide()
         fl.addWidget(self.fav_empty)
-        self.tabs.addTab(fav_w, "★ Ulubione")
+        self.tabs.addTab(fav_w, "Ulubione")
 
         all_w = QWidget()
-        al = QVBoxLayout(all_w)
-        al.setContentsMargins(0, 8, 0, 0)
+        al = T.vbox(all_w, (0, T.S3, 0, 0), T.S2)
         self.search = QLineEdit()
-        self.search.setPlaceholderText("Szukaj respa…")
+        self.search.setPlaceholderText("Szukaj respa lub regionu")
+        self.search.addAction(T.icon("search", T.TEXT_3), QLineEdit.LeadingPosition)
         self.search.textChanged.connect(self._fill_all)
         al.addWidget(self.search)
         self.only_free = QCheckBox("Tylko wolne teraz")
@@ -753,250 +852,249 @@ class MainWindow(QMainWindow):
         al.addWidget(self.only_free)
         self.tree = QTreeWidget()
         self.tree.setHeaderLabels(["", "Resp", "Status", "Następna"])
+        self.tree.setHeaderHidden(True)
         self.tree.setRootIsDecorated(False)
         self.tree.setIndentation(0)
-        self.tree.setColumnWidth(0, 30)
-        self.tree.setColumnWidth(1, 200)
-        self.tree.setColumnWidth(2, 60)
+        self.tree.setUniformRowHeights(True)
+        self.tree.setIconSize(QSize(T.ICON, T.ICON))
+        self.tree.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.tree.setTextElideMode(Qt.ElideRight)
+        hdr_view = self.tree.header()
+        hdr_view.setStretchLastSection(False)
+        from PySide6.QtWidgets import QHeaderView
+        hdr_view.setSectionResizeMode(0, QHeaderView.Fixed)
+        hdr_view.setSectionResizeMode(1, QHeaderView.Stretch)
+        hdr_view.setSectionResizeMode(2, QHeaderView.Fixed)
+        hdr_view.setSectionResizeMode(3, QHeaderView.Fixed)
+        self.tree.setColumnWidth(0, T.CONTROL_H)
+        self.tree.setColumnWidth(2, T.S6 * 3)
+        self.tree.setColumnWidth(3, T.S6 * 4)
+        self.tree.setColumnHidden(3, True)      # „następna” jest w podpowiedzi i w panelu respa
+        self.tree.setCursor(Qt.PointingHandCursor)
         self.tree.itemClicked.connect(self._tree_clicked)
-        al.addWidget(self.tree)
+        al.addWidget(self.tree, 1)
         self.tabs.addTab(all_w, "Wszystkie")
 
         mine_w = QWidget()
-        ml = QVBoxLayout(mine_w)
-        ml.setContentsMargins(0, 8, 0, 0)
-        self.mine_list = QListWidget()
-        self.mine_list.setSpacing(4)
+        ml = T.vbox(mine_w, (0, T.S3, 0, 0))
+        self.mine_list = AutoList()
         self.mine_list.itemClicked.connect(
             lambda it: it.data(Qt.UserRole) and QTimer.singleShot(0, lambda sid=it.data(Qt.UserRole): self.select_spot(sid)))
         ml.addWidget(self.mine_list)
         self.tabs.addTab(mine_w, "Moje")
-        self.tabs.setMinimumWidth(260)
+        self.tabs.setMinimumWidth(T.S6 * 11)
         split.addWidget(self.tabs)
 
         # ===== strona „Snajper”
         snipe_page = QWidget()
-        sl = QVBoxLayout(snipe_page)
-        sl.setContentsMargins(0, 0, 0, 0)
-        new_snipe = QPushButton("🎯  Nowy snajp")
+        sl = T.vbox(snipe_page)
+        new_snipe = T.button("Pilnuj terminu", "target")
         new_snipe.clicked.connect(lambda: self._snipe_from_nav("snipe"))
-        new_watch = QPushButton("🔔  Nowa obserwacja")
-        new_watch.clicked.connect(lambda: self._snipe_from_nav("watch"))
         hdr2, _ = page_header("Snajper",
-                              "🎯 Snajp rezerwuje termin w chwili, gdy strona go odblokuje (równo dobę wcześniej). "
-                              "🔔 Obserwacja daje znać, gdy w przedziale ktoś zwolni miejsce. Aplikacja musi być włączona.",
-                              [new_snipe, new_watch])
+                              "Pilnowane terminy: zamknięte zarezerwuję w sekundzie otwarcia, zajęte – gdy ktoś je zwolni.",
+                              [new_snipe])
         sl.addWidget(hdr2)
-        self.snipe_list = QListWidget()
-        self.snipe_list.setSpacing(6)
+        self.snipe_list = AutoList()
         sl.addWidget(self.snipe_list, 1)
+        go_resp = T.button("Przejdź do respów")
+        go_resp.clicked.connect(lambda: self.go_page(0))
+        self.snipe_empty = T.EmptyState("target", "Nie pilnujesz jeszcze żadnego terminu",
+                                        "Wybierz resp na stronie Respy i kliknij „Pilnuj”. "
+                                        "Aplikacja musi być wtedy włączona.", go_resp)
+        sl.addWidget(self.snipe_empty, 1)
         self._snipe_page = snipe_page
         self._resp_page = root
 
-        # prawa strona – rezerwacja
+        # prawa strona – wybrany resp i rezerwacja
         right = QWidget()
-        rl = QVBoxLayout(right)
-        rl.setContentsMargins(16, 4, 4, 4)
-        self.spot_title = QLabel("Wybierz resp z listy")
-        self.spot_title.setStyleSheet("font-size:20px; font-weight:800;")
-        self.spot_title.setWordWrap(True)
-        rl.addWidget(self.spot_title)
-        head = FlowLayout()
-        self.open_btn = QPushButton("Otwórz na stronie")
-        self.open_btn.clicked.connect(lambda: self.cur_spot and webbrowser.open(api.spot_url(self.guild, self.cur_spot)))
-        head.addWidget(self.open_btn)
-        self.snipe_btn = QPushButton("🎯 Snajpuj")
-        self.snipe_btn.setToolTip("Zarezerwuj automatycznie termin, który jeszcze nie jest dostępny")
+        rl = T.vbox(right)
+        head = T.hbox(spacing=T.S2)
+        tcol = T.vbox(spacing=T.S1)
+        self.spot_title = T.label("Wybierz resp z listy", "title", wrap=True)
+        tcol.addWidget(self.spot_title)
+        self.spot_sub = T.label("Ulubione, wszystkie respy i Twoje rezerwacje są po lewej.", "muted", wrap=True)
+        tcol.addWidget(self.spot_sub)
+        head.addLayout(tcol, 1)
+        self.snipe_btn = T.button("Pilnuj", "target",
+                                  tip="Termin jeszcze zamknięty – zarezerwuję go w sekundzie otwarcia.\n"
+                                      "Termin zajęty – dam znać (albo zarezerwuję), gdy ktoś go zwolni.")
         self.snipe_btn.clicked.connect(lambda: self.new_snipe("snipe"))
-        head.addWidget(self.snipe_btn)
-        self.watch_btn = QPushButton("🔔 Obserwuj")
-        self.watch_btn.setToolTip("Powiadom, gdy w wybranym przedziale zwolni się miejsce")
-        self.watch_btn.clicked.connect(lambda: self.new_snipe("watch"))
-        head.addWidget(self.watch_btn)
+        head.addWidget(self.snipe_btn, 0, Qt.AlignTop)
+        self.open_btn = T.icon_button("external", "Otwórz na stronie tibialoot.com")
+        self.open_btn.clicked.connect(lambda: self.cur_spot and webbrowser.open(api.spot_url(self.guild, self.cur_spot)))
+        head.addWidget(self.open_btn, 0, Qt.AlignTop)
         rl.addLayout(head)
-        self.spot_sub = QLabel("")
-        self.spot_sub.setWordWrap(True)
-        self.spot_sub.setStyleSheet(f"color:{C_MUTED};")
-        rl.addWidget(self.spot_sub)
-
-        self.limit_lbl = QLabel("")
-        self.limit_lbl.setWordWrap(True)
-        self.limit_lbl.setStyleSheet(f"color:{C_MUTED};")
-        rl.addWidget(self.limit_lbl)
+        rl.addSpacing(T.S4)
 
         self.timeline = Timeline()
+        self.timeline.setToolTip("Kliknij oś, aby wybrać godzinę")
         self.timeline.picked.connect(self._timeline_pick)
         rl.addWidget(self.timeline)
-        legend = QLabel(f"<span style='color:{C_FREE}'>■</span> wolne &nbsp; "
-                        f"<span style='color:{C_ACCENT}'>■</span> zajęte &nbsp; "
-                        f"<span style='color:{C_MINE}'>■</span> Twoje &nbsp; "
-                        f"<span style='color:#ffffff'>□</span> wybrany termin &nbsp; "
-                        f"<span style='color:#9ca3af'>┆</span> ostatni możliwy początek &nbsp; — kliknij oś, aby wybrać godzinę")
-        legend.setStyleSheet(f"color:{C_MUTED}; font-size:11px;")
-        legend.setWordWrap(True)
-        rl.addWidget(legend)
+        rl.addSpacing(T.S1)
+        sw = lambda c, ch="■": f"<span style='color:{c}'>{ch}</span>"
+        self.legend = QLabel(f"{sw(T.OK)} wolne &nbsp;&nbsp;{sw(T.TL_TAKEN)} zajęte &nbsp;&nbsp;{sw(T.INFO)} Twoje "
+                             f"&nbsp;&nbsp;{sw(T.TL_SEL, '□')} wybrany &nbsp;&nbsp;{sw(T.TEXT_3, '┆')} ostatni możliwy początek")
+        self.legend.setObjectName("hint")
+        self.legend.setMinimumWidth(10)
+        self.legend.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        rl.addWidget(self.legend)
+        rl.addSpacing(T.S4)
 
         lists = QBoxLayout(QBoxLayout.LeftToRight)
+        lists.setSpacing(T.S4)
         self.lists_box = lists
-        c1 = QVBoxLayout()
-        c1.addWidget(self._h("Wolne okna · kliknij, aby wybrać"))
+        c1 = T.vbox(spacing=T.S2)
+        c1.addWidget(T.caption("Wolne okna – kliknij, aby wybrać"))
         self.free_list = QListWidget()
-        self.free_list.setObjectName("rows")
-        self.free_list.setWordWrap(True)
-        self.free_list.setSpacing(3)
+        self.free_list.setVerticalScrollMode(QListWidget.ScrollPerPixel)
         self.free_list.setCursor(Qt.PointingHandCursor)
         self.free_list.itemClicked.connect(self._free_clicked)
-        c1.addWidget(self.free_list)
-        c2 = QVBoxLayout()
-        c2.addWidget(self._h("Nadchodzące rezerwacje"))
+        c1.addWidget(self.free_list, 1)
+        c2 = T.vbox(spacing=T.S2)
+        c2.addWidget(T.caption("Nadchodzące rezerwacje"))
         self.res_list = QListWidget()
-        self.res_list.setObjectName("rows")
-        self.res_list.setWordWrap(True)
-        self.res_list.setSpacing(3)
-        c2.addWidget(self.res_list)
+        self.res_list.setVerticalScrollMode(QListWidget.ScrollPerPixel)
+        c2.addWidget(self.res_list, 1)
         lists.addLayout(c1, 1)
         lists.addLayout(c2, 1)
         rl.addLayout(lists, 1)
+        rl.addSpacing(T.S4)
 
+        # --- formularz nowej rezerwacji
         form = QFrame()
-        form.setObjectName("card")
-        fl2 = QVBoxLayout(form)
-        fl2.setContentsMargins(16, 12, 16, 12)
-        fl2.setSpacing(10)
-        ftitle = QLabel("Nowa rezerwacja")
-        ftitle.setStyleSheet("font-size:14px; font-weight:800;")
-        fl2.addWidget(ftitle)
-        grid = QVBoxLayout()      # etykieta nad rzędem – rzędy mogą się zawijać przy wąskim oknie
-        grid.setSpacing(6)
+        form.setObjectName("panel")
+        fl2 = T.vbox(form, (T.S4, T.S4, T.S4, T.S4), T.S3)
+        grid = QGridLayout()
+        grid.setHorizontalSpacing(T.S3)
+        grid.setVerticalSpacing(T.S3)
+        grid.setColumnMinimumWidth(0, T.S6 * 3)
 
         def row_label(t):
-            l = QLabel(t)
-            l.setStyleSheet(f"color:{C_MUTED}; font-weight:600;")
-            l.setMinimumWidth(70)
+            l = T.label(t, "muted")
+            l.setFixedHeight(T.CONTROL_H)
             return l
 
-        # --- początek: dzień + godzina z przyciskami przesunięć
-        r1 = FlowLayout()
-        r1.setSpacing(6)
+        # początek: dzień + godzina z przyciskami przesunięć
+        r1 = FlowLayout(hspacing=T.S2, vspacing=T.S2)
         self.sday_group = QButtonGroup(self)
         self.sday_btns = []
         for i in range(2):
             b = QPushButton()
             b.setCheckable(True)
             b.setObjectName("seg")
-            b.setMinimumWidth(104)
+            b.setCursor(Qt.PointingHandCursor)
             self.sday_group.addButton(b, i)
             self.sday_btns.append(b)
             r1.addWidget(b)
         self.sday_group.idClicked.connect(self._start_day_clicked)
-        r1.addSpacing(14)
         self.shift_btns = []
         for mins, lbl in ((-60, "−1 h"), (-15, "−15")):
-            b = QPushButton(lbl)
-            b.setObjectName("step")
+            b = T.button(lbl, kind="step")
+            b.setFixedWidth(T.S6 + T.S4)
             b.setAutoRepeat(True)
             b.clicked.connect(lambda _=False, m=mins: self._shift_start(m))
             r1.addWidget(b)
             self.shift_btns.append(b)
         self.start_time = TimeField()
-        self.start_time.setObjectName("bigtime")
-        self.start_time.setFixedWidth(84)
         self.start_time.committed.connect(self._start_time_changed)
         self.start_time.stepped.connect(self._shift_start)
         r1.addWidget(self.start_time)
         for mins, lbl in ((15, "+15"), (60, "+1 h")):
-            b = QPushButton(lbl)
-            b.setObjectName("step")
+            b = T.button(lbl, kind="step")
+            b.setFixedWidth(T.S6 + T.S4)
             b.setAutoRepeat(True)
             b.clicked.connect(lambda _=False, m=mins: self._shift_start(m))
             r1.addWidget(b)
             self.shift_btns.append(b)
-        r1.addSpacing(14)
-        self.asap_btn = QPushButton("Najwcześniej")
-        self.asap_btn.setObjectName("small")
-        self.asap_btn.setToolTip("Pierwszy wolny moment na tym respie")
+        self.asap_btn = T.button("Najwcześniej", kind="link", tip="Pierwszy wolny moment na tym respie")
         self.asap_btn.clicked.connect(lambda: self._preselect_first_free())
         r1.addWidget(self.asap_btn)
-        r1.addStretch(1)
-        grid.addWidget(row_label("Początek"))
-        grid.addLayout(r1)
-        grid.addSpacing(10)
+        grid.addWidget(row_label("Początek"), 0, 0, Qt.AlignTop)
+        grid.addLayout(r1, 0, 1)
 
-        # --- długość: gotowe wartości + suwak do dokładnego ustawienia
-        r3 = FlowLayout()
-        r3.setSpacing(6)
+        # długość: gotowe wartości + suwak do dokładnego ustawienia
+        r3 = FlowLayout(hspacing=T.S2, vspacing=T.S2)
         self.len_group = QButtonGroup(self)
         self.len_group.setExclusive(False)
         self.len_btns = []
+        short = {30: "30 min", 60: "1 h", 90: "1,5 h", 120: "2 h", 150: "2,5 h", 180: "3 h"}
         for mins in (30, 60, 90, 120, 150, 180):
-            b = QPushButton(fmt_len(mins))
-            b.setObjectName("chip")
+            b = QPushButton(short[mins])
+            b.setObjectName("seg")
             b.setCheckable(True)
+            b.setCursor(Qt.PointingHandCursor)
+            b.setToolTip(fmt_len(mins))
             b.setProperty("mins", mins)
             b.clicked.connect(lambda _=False, m=mins: self._set_len(m))
             r3.addWidget(b)
             self.len_btns.append(b)
-        r3.addSpacing(14)
         self.len_slider = QSlider(Qt.Horizontal)
         self.len_slider.setSingleStep(5)
         self.len_slider.setPageStep(15)
-        self.len_slider.setFixedWidth(170)
+        self.len_slider.setFixedWidth(T.S6 * 4)
         self.len_slider.setToolTip("Dokładna długość (co 5 min)")
         self.len_slider.valueChanged.connect(self._len_slider_changed)
-        r3.addWidget(self.len_slider)
-        r3.addSpacing(10)
-        self.len_lbl = QLabel("")
-        self.len_lbl.setMinimumWidth(90)
-        self.len_lbl.setStyleSheet("font-weight:700;")
-        r3.addWidget(self.len_lbl)
-        r3.addStretch(1)
-        grid.addWidget(row_label("Długość"))
-        grid.addLayout(r3)
-        self.cap_lbl = QLabel("")
-        self.cap_lbl.setWordWrap(True)
-        self.cap_lbl.setStyleSheet(f"color:{C_MUTED}; font-size:11px;")
-        grid.addWidget(self.cap_lbl)
+        exact = QWidget()                     # suwak i wartość zawijają się razem
+        el = T.hbox(exact, spacing=T.S3)
+        el.addWidget(self.len_slider)
+        self.len_lbl = T.label("", "strong")
+        self.len_lbl.setFixedSize(T.S6 * 3, T.CONTROL_H)
+        el.addWidget(self.len_lbl)
+        r3.addWidget(exact)
+        grid.addWidget(row_label("Długość"), 1, 0, Qt.AlignTop)
+        grid.addLayout(r3, 1, 1)
+        self.cap_lbl = T.label("", "hint", wrap=True)
+        grid.addWidget(self.cap_lbl, 2, 1)
+        grid.setColumnStretch(1, 1)
         fl2.addLayout(grid)
 
-        line = QFrame()
-        line.setFrameShape(QFrame.HLine)
-        line.setStyleSheet(f"color:{C_BORDER}; background:{C_BORDER}; max-height:1px;")
-        fl2.addWidget(line)
-
-        # --- podsumowanie + przycisk
-        r2 = QHBoxLayout()
-        sumcol = QVBoxLayout()
-        sumcol.setSpacing(2)
-        self.summary_lbl = QLabel("")
-        self.summary_lbl.setStyleSheet("font-size:17px; font-weight:800;")
+        # podsumowanie + przycisk
+        r2 = T.hbox(spacing=T.S4)
+        sumcol = T.vbox(spacing=T.S1)
+        self.summary_lbl = T.label("", "title", wrap=True)
         sumcol.addWidget(self.summary_lbl)
-        self.valid_lbl = QLabel("")
-        self.valid_lbl.setWordWrap(True)
-        sumcol.addWidget(self.valid_lbl)
+        vrow = T.hbox(spacing=T.S2)
+        self.valid_icon = QLabel()
+        self.valid_icon.setFixedSize(T.ICON, T.ICON)
+        vrow.addWidget(self.valid_icon)
+        self.valid_lbl = T.label("", "muted", wrap=True)
+        vrow.addWidget(self.valid_lbl, 1)
+        sumcol.addLayout(vrow)
         r2.addLayout(sumcol, 1)
-        self.book_btn = QPushButton("Zarezerwuj")
-        self.book_btn.setObjectName("primary")
-        self.book_btn.setMinimumHeight(40)
-        self.book_btn.setMinimumWidth(210)
+        self.book_btn = T.button("Zarezerwuj", kind="primary")
+        self.book_btn.setMinimumWidth(T.S6 * 6)
         self.book_btn.clicked.connect(self.book)
         r2.addWidget(self.book_btn, 0, Qt.AlignVCenter)
         fl2.addLayout(r2)
-        hint = QLabel("Najwyżej 3 godziny, początek najwyżej dobę do przodu. Czas serwera (CET).")
-        hint.setWordWrap(True)
-        hint.setStyleSheet(f"color:{C_MUTED}; font-size:11px;")
-        fl2.addWidget(hint)
+        self.limit_lbl = T.label("Najwyżej 3 godziny, początek najwyżej dobę do przodu. Czas serwera (CET).", "hint", wrap=True)
+        fl2.addWidget(self.limit_lbl)
         rl.addWidget(form)
 
-        split.addWidget(right)
-        split.setSizes([400, 880])
+        self.detail_stack = QStackedWidget()
+        self.detail_empty = T.EmptyState("calendar", "Wybierz resp",
+                                         "Kliknij resp na liście po lewej – zobaczysz wolne godziny i zarezerwujesz termin.")
+        self.detail_stack.addWidget(self.detail_empty)
+        self.detail_stack.addWidget(right)
+        split.addWidget(self.detail_stack)
+        split.setStretchFactor(0, 0)
+        split.setStretchFactor(1, 1)
+        split.setSizes([300, 700])
 
-        self.status_lbl = ElidedLabel()   # długi tekst skraca się „…” zamiast poszerzać okno
-        self.statusBar().addWidget(self.status_lbl, 1)
+        # pasek stanu: ikona + tekst skracany „…”
+        sb = QWidget()
+        sbl = T.hbox(sb, (T.S4, 0, T.S4, 0), T.S2)
+        self.status_icon = QLabel()
+        self.status_icon.setFixedSize(T.ICON - 2, T.ICON - 2)
+        sbl.addWidget(self.status_icon)
+        self.status_lbl = ElidedLabel()
+        self.status_lbl.setObjectName("hint")
+        sbl.addWidget(self.status_lbl, 1)
+        self.statusBar().addWidget(sb, 1)
+        self.statusBar().setSizeGripEnabled(False)
 
         # ===== strona „Hunty”
         hunt_page = QWidget()
-        hl = QVBoxLayout(hunt_page)
-        hl.setContentsMargins(0, 0, 0, 0)
+        hl = T.vbox(hunt_page)
         hdr3, _ = page_header("Hunty", "W grze kliknij „Copy to clipboard” w analizatorze – aplikacja sama go przechwyci, "
                                        "rozpozna spot i wypełni formularz na hunt-analyser.com.", [])
         hl.addWidget(hdr3)
@@ -1007,22 +1105,28 @@ class MainWindow(QMainWindow):
         except Exception:
             self.hunt = None
             log_error(traceback.format_exc())
-            err = QLabel("Moduł huntów nie uruchomił się – szczegóły w Ustawienia → Dane i log.\n"
-                         "Najczęściej brakuje biblioteki: pip install playwright")
-            err.setAlignment(Qt.AlignCenter)
-            hl.addWidget(err, 1)
+            hl.addWidget(T.EmptyState("alert", "Moduł huntów nie uruchomił się",
+                                      "Szczegóły w Ustawienia → Dane i log. Najczęściej brakuje biblioteki: "
+                                      "pip install playwright"), 1)
+
+        # ===== strona „Imbuementy”
+        imbu_page = QWidget()
+        il = T.vbox(imbu_page)
+        hdr4, _ = page_header("Imbuementy", "Kalkulator kosztu: sprawdza, czy taniej kupić materiały na markecie, "
+                                            "czy pakiet za Gold Tokeny. Wpisane ceny są zapamiętywane.", [])
+        il.addWidget(hdr4)
+        from imbu import ImbuPage
+        self.imbu = ImbuPage(self.cfg, lambda m: self.log(m, "Imbuementy"))
+        il.addWidget(self.imbu, 1)
 
         # ===== powłoka: pasek boczny + strony
         shell = QWidget()
-        sh = QHBoxLayout(shell)
-        sh.setContentsMargins(0, 0, 0, 0)
-        sh.setSpacing(0)
+        sh = T.hbox(shell)
         sh.addWidget(self._build_sidebar())
         self.pages = QStackedWidget()
-        for w in (self._resp_page, self._snipe_page, hunt_page):
+        for w in (self._resp_page, self._snipe_page, hunt_page, imbu_page):
             wrap = QWidget()
-            wl = QVBoxLayout(wrap)
-            wl.setContentsMargins(22, 16, 22, 12)
+            wl = T.vbox(wrap, (T.S6, T.S6, T.S6, T.S4))
             wl.addWidget(w)
             self.pages.addWidget(wrap)
         sh.addWidget(self.pages, 1)
@@ -1030,78 +1134,79 @@ class MainWindow(QMainWindow):
         self.go_page(int(self.cfg.data.get("main_tab", 0)))
         self._reservation_enabled(False)
 
-    def _h(self, t):
-        l = QLabel(t)
-        l.setStyleSheet(f"color:{C_MUTED}; font-size:11px; font-weight:700; text-transform:uppercase;")
-        return l
-
     # ---------- powłoka
+    NAV = (("calendar", "Respy"), ("target", "Snajper"), ("upload", "Hunty"), ("calculator", "Imbuementy"))
+    SIDE_W, SIDE_W_COMPACT = 240, 88
+
+    def _nav_button(self, icon_name: str, text: str) -> "NavButton":
+        return NavButton(icon_name, text)
+
     def _build_sidebar(self) -> QWidget:
         side = QFrame()
         side.setObjectName("sidebar")
-        side.setFixedWidth(240)
+        side.setFixedWidth(self.SIDE_W)
         self.sidebar = side
         self._compact_hide: list[QWidget] = []
-        v = QVBoxLayout(side)
-        v.setContentsMargins(14, 18, 14, 14)
-        v.setSpacing(4)
-        brow = QHBoxLayout()
-        brow.setSpacing(10)
+        v = T.vbox(side, (T.S3, T.S4, T.S3, T.S3))
+        self._side_layout = v
+        brand = QWidget()
+        brand.setFixedHeight(T.ROW_H)
+        brow = T.hbox(brand, (T.S3, 0, 0, 0), T.S3)
         logo = QLabel()
         if ICON_PATH.exists():
-            logo.setPixmap(QIcon(str(ICON_PATH)).pixmap(40, 40))
-        logo.setFixedSize(40, 40)
-        brow.addWidget(logo, 0, Qt.AlignLeft | Qt.AlignVCenter)   # na środku dwóch linijek nazwy
+            logo.setPixmap(QIcon(str(ICON_PATH)).pixmap(28, 28))
+        logo.setFixedSize(28, 28)
+        brow.addWidget(logo)
+        name = T.label("Tibia Apps Companion", "strong")
+        brow.addWidget(name, 1)
         self._brand_row, self._logo = brow, logo
-        brand = QLabel("Tibia Apps<br>Companion")
-        brand.setStyleSheet("font-size:16px; font-weight:800; line-height:110%;")
-        brow.addWidget(brand, 1)
-        v.addLayout(brow)
-        tag = QLabel(f"respy · snajper · hunty · v{VERSION}")
-        tag.setStyleSheet(f"color:{C_MUTED}; font-size:11px;")
-        v.addWidget(tag)
-        self._compact_hide += [brand, tag]
-        v.addSpacing(18)
+        self._compact_hide.append(name)
+        v.addWidget(brand)
+        v.addSpacing(T.S6)
+
         self.nav_group = QButtonGroup(self)
         self.nav_btns = []
-        for i, (icon, name) in enumerate((("📅", "Respy"), ("🎯", "Snajper"), ("📤", "Hunty"))):
-            b = QPushButton(f"{icon}   {name}")
-            b.setProperty("full", f"{icon}   {name}")
-            b.setProperty("short", icon)
-            b.setToolTip(name)
-            b.setObjectName("nav")
-            b.setCheckable(True)
+        for i, (ic, name_) in enumerate(self.NAV):
+            b = self._nav_button(ic, name_)
             self.nav_group.addButton(b, i)
             self.nav_btns.append(b)
             v.addWidget(b)
+            v.addSpacing(T.S1)
         self.nav_group.idClicked.connect(self.go_page)
         v.addStretch(1)
 
-        lbl_today = section_label("Dziś")
+        def padded(w, top=0):
+            box = QWidget()
+            l = T.hbox(box, (T.S3, top, 0, 0))
+            l.addWidget(w)
+            return box
+
+        lbl_today = padded(T.caption("Dziś"))
         v.addWidget(lbl_today)
+        v.addSpacing(T.S2)
         from today import TodayWidget
         self.today = TodayWidget(self.cfg.dir / "today", now_server, lambda m: self.log(m, "Dziś"))
-        v.addWidget(self.today)
-        v.addSpacing(8)
-        lbl_acc = section_label("Konta")
+        self._today_box = padded(self.today)
+        v.addWidget(self._today_box)
+        v.addSpacing(T.S6)
+        lbl_acc = padded(T.caption("Konta"))
         v.addWidget(lbl_acc)
+        v.addSpacing(T.S1)
         self._compact_hide += [lbl_today, lbl_acc]
         self.acc_widgets = {}
         for key in ("tibia", "hunt"):
             row = QPushButton()
             row.setObjectName("account")
-            row.setMinimumHeight(48)
+            row.setCursor(Qt.PointingHandCursor)
             row.clicked.connect(lambda _=False, k=key: self.login_site(k))
-            rl = QHBoxLayout(row)
-            rl.setContentsMargins(10, 6, 10, 6)
-            dot = QLabel("●")
+            rl = T.hbox(row, (T.S3, 0, T.S3, 0), T.S3)
+            dot = QLabel()
+            dot.setFixedSize(8, 8)
             dot.setAttribute(Qt.WA_TransparentForMouseEvents)
             rl.addWidget(dot)
-            col = QVBoxLayout()
-            col.setSpacing(0)
-            nm = QLabel(SITES[key][0])
-            nm.setStyleSheet("font-weight:700; background:transparent;")
-            st = QLabel("")
+            col = T.vbox()
+            nm = T.label(SITES[key][0], "strong")
+            st = T.label("", "hint")
             for l in (nm, st):
                 l.setAttribute(Qt.WA_TransparentForMouseEvents)
             col.addWidget(nm)
@@ -1110,32 +1215,33 @@ class MainWindow(QMainWindow):
             rl.addLayout(col, 1)
             v.addWidget(row)
             self.acc_widgets[key] = (row, dot, st)
+            self._acc_layouts = getattr(self, "_acc_layouts", []) + [rl]
             self._paint_account(key)
-        v.addSpacing(10)
+        v.addSpacing(T.S4)
         self.update_btn = QPushButton("")
         self.update_btn.setObjectName("update")
+        self.update_btn.setIcon(T.icon("update", T.OK, T.ICON_NAV))
+        self.update_btn.setIconSize(QSize(T.ICON_NAV, T.ICON_NAV))
+        self.update_btn.setCursor(Qt.PointingHandCursor)
         self.update_btn.setVisible(False)
         self.update_btn.clicked.connect(lambda: self.pending_update and self.install_update(self.pending_update))
         v.addWidget(self.update_btn)
-        sett = QPushButton("⚙   Ustawienia")
-        sett.setProperty("full", "⚙   Ustawienia")
-        sett.setProperty("short", "⚙")
-        sett.setToolTip("Ustawienia")
+        v.addSpacing(T.S1)
+        sett = self._nav_button("settings", "Ustawienia")
+        sett.setCheckable(False)
         self.sett_btn = sett
-        sett.setObjectName("nav")
         sett.clicked.connect(lambda: self.open_settings())
         v.addWidget(sett)
-        v.addSpacing(8)
-        self.clock_lbl = QLabel()
-        self.clock_lbl.setStyleSheet(f"color:{C_MUTED}; font-size:11px;")
-        v.addWidget(self.clock_lbl)
-        self._compact_hide.append(self.clock_lbl)
-        self._side_layout = v
+        v.addSpacing(T.S2)
+        self.clock_lbl = T.label("", "hint")
+        self._clock_box = padded(self.clock_lbl)
+        v.addWidget(self._clock_box)
+        self._compact_hide.append(self._clock_box)
         return side
 
     # ---------- układ zależny od szerokości okna
     COMPACT_SIDEBAR_BELOW = 1150   # szerokość okna, poniżej której pasek boczny pokazuje same ikony
-    STACK_BELOW = 980              # szerokość strony, poniżej której panele układają się pionowo
+    STACK_BELOW = 900              # szerokość strony, poniżej której panele układają się pionowo
 
     def _apply_responsive(self):
         if not hasattr(self, "sidebar"):
@@ -1143,41 +1249,46 @@ class MainWindow(QMainWindow):
         compact = self.width() < self.COMPACT_SIDEBAR_BELOW
         if getattr(self, "_compact", None) != compact:
             self._compact = compact
-            self.sidebar.setFixedWidth(78 if compact else 240)
-            self._side_layout.setContentsMargins(7 if compact else 14, 18, 7 if compact else 14, 14)
+            self.sidebar.setFixedWidth(self.SIDE_W_COMPACT if compact else self.SIDE_W)
             for w in self._compact_hide:
                 w.setVisible(not compact)
-            # zwinięty pasek: logo na środku, w jednej linii z ikonami menu
-            self._brand_row.setAlignment(self._logo, (Qt.AlignHCenter if compact else Qt.AlignLeft) | Qt.AlignVCenter)
+            # zwinięty pasek: logo, ikony, kafelki i kropki kont na jednej osi
+            self._brand_row.setContentsMargins(0 if compact else T.S3, 0, 0, 0)
+            inner = self.SIDE_W_COMPACT - 2 * T.S3
             for b in self.nav_btns + [self.sett_btn]:
-                b.setText(b.property("short") if compact else b.property("full"))
-                b.setStyleSheet("text-align:center; font-size:18px;" if compact else "")
-            for row, dot, st in self.acc_widgets.values():
-                row.setMinimumHeight(40 if compact else 48)
+                b.set_compact(compact, inner)
+            self.update_btn.setText("" if compact else (self.update_btn.property("full") or ""))
+            self.update_btn.setStyleSheet(f"padding-left: {(inner - T.ICON_NAV) // 2}px;" if compact else "")
+            for rl in self._acc_layouts:      # kropka na osi ikon menu
+                m = (self.SIDE_W_COMPACT - 2 * T.S3 - 8) // 2
+                rl.setContentsMargins(*((m, 0, m, 0) if compact else (T.S3, 0, T.S3, 0)))
+            self._today_box.layout().setContentsMargins(0 if compact else T.S3, 0, 0, 0)
             self.today.set_vertical(compact)
             self._paint_update_btn()
+            self._fill_snipes_nav()
         page_w = self.width() - self.sidebar.width()
         stacked = page_w < self.STACK_BELOW
         if getattr(self, "_stacked", None) != stacked:
             self._stacked = stacked
             self.split.setOrientation(Qt.Vertical if stacked else Qt.Horizontal)
             if stacked:
-                self.split.setSizes([260, 900])
+                self.split.setSizes([300, 900])
             else:
-                self.split.setSizes([400, 880])
+                self.split.setSizes([300, 700])
         if self.hunt:
             self.hunt.set_stacked(page_w < 900)
-        self.lists_box.setDirection(QBoxLayout.TopToBottom if page_w < 760 else QBoxLayout.LeftToRight)
+        self.lists_box.setDirection(QBoxLayout.TopToBottom if page_w < 640 else QBoxLayout.LeftToRight)
 
     def _paint_update_btn(self):
         rel = getattr(self, "pending_update", None)
         if rel is None:
             return
-        self.update_btn.setText("⬆" if getattr(self, "_compact", False) else f"⬆   Aktualizacja {rel.version}")
-        self.update_btn.setToolTip(f"Aktualizacja {rel.version}")
+        self.update_btn.setProperty("full", f"Aktualizacja {rel.version}")
+        self.update_btn.setText("" if getattr(self, "_compact", False) else f"Aktualizacja {rel.version}")
+        self.update_btn.setToolTip(f"Zainstaluj wersję {rel.version}")
 
     def go_page(self, i: int):
-        i = max(0, min(int(i), 2))
+        i = max(0, min(int(i), self.pages.count() - 1))
         self.pages.setCurrentIndex(i)
         self.nav_btns[i].setChecked(True)
         if self.cfg.data.get("main_tab") != i:
@@ -1189,15 +1300,15 @@ class MainWindow(QMainWindow):
             return
         name, purpose = SITES[key]
         st = self.accounts.get(key)
-        color, txt = ((C_FREE, "zalogowano") if st else
-                      (C_MUTED, "sprawdzam…") if st is None else ("#ef4444", "kliknij, aby zalogować"))
+        color, txt, role = ((T.OK, "zalogowano", "faint") if st else
+                            (T.TEXT_3, "sprawdzam…", "faint") if st is None else (T.ERR, "kliknij, aby zalogować", "err"))
         if key == "tibia" and st and self.board and self.board.author:
             txt = self.board.author
         row, dot, lbl = self.acc_widgets[key]
-        dot.setStyleSheet(f"color:{color}; font-size:14px; background:transparent;")
+        dot.setPixmap(T.dot(color, 8))
         lbl.setText(txt)
-        lbl.setStyleSheet(f"color:{color if st is False else C_MUTED}; font-size:11px; background:transparent;")
-        row.setToolTip(f"{name} – {purpose}. " + ("Kliknij, aby się wylogować." if st else "Kliknij, aby się zalogować."))
+        T.set_role(lbl, role)
+        row.setToolTip(f"{name} – {purpose}: {txt}. " + ("Kliknij, aby się wylogować." if st else "Kliknij, aby się zalogować."))
 
     def set_account(self, key: str, ok: bool | None):
         if self.accounts.get(key) == ok:
@@ -1221,11 +1332,28 @@ class MainWindow(QMainWindow):
                 "warn" if msg.startswith("⚠") else "muted"
         self.status(f"{source}: {msg}", role)
 
-    def status(self, msg: str, role: str = "muted"):
-        colors = {"err": "#ef4444", "ok": C_FREE, "warn": "#f59e0b", "info": C_MINE, "muted": C_MUTED}
+    STATUS_ICON = {"err": ("alert-circle", T.ERR), "ok": ("check-circle", T.OK), "warn": ("alert", T.WARN),
+                   "info": ("info", T.INFO)}
+
+    _status_seq = 0
+    _status_transient = False
+
+    def status(self, msg: str, role: str = "muted", timeout: int = 0):
+        """timeout (ms) > 0: komunikat znika sam (np. podpowiedzi po kliknięciu osi czasu)."""
+        self._status_seq += 1
+        self._status_transient = bool(timeout)
+        if timeout:
+            seq = self._status_seq
+            QTimer.singleShot(timeout, lambda: seq == self._status_seq and self.status(""))
+        # znaczki ✔ ✖ ⚠ z logu zamieniamy na ikonę – w pasku stanu nie ma emoji
+        for sym in ("✔ ", "✖ ", "⚠ ", "✔", "✖", "⚠"):
+            msg = msg.replace(sym, "")
         self.status_lbl.setText(msg if len(msg) <= 140 else msg[:137] + "…")
         self.status_lbl.setToolTip(msg)
-        self.status_lbl.setStyleSheet(f"color:{colors.get(role, C_MUTED)};")
+        T.set_role(self.status_lbl, {"err": "err", "ok": "ok", "warn": "warn", "info": "info"}.get(role, "muted"))
+        ic = self.STATUS_ICON.get(role)
+        self.status_icon.setPixmap(T.pixmap(ic[0], ic[1], T.ICON - 2) if ic else QPixmap())
+        self.status_icon.setVisible(bool(ic))
 
     def sync_cookies_from_filler(self, cookies: list[dict]):
         """Logowanie zrobione w oknie przeglądarki wypełniającej → wspólny profil aplikacji."""
@@ -1255,12 +1383,12 @@ class MainWindow(QMainWindow):
 
     def login_site(self, key: str):
         if self.accounts.get(key):
-            if QMessageBox.question(self, "Konto", f"Jesteś zalogowany na {SITES[key][0]}.\n\nWylogować z aplikacji?") \
+            if T.ask(self, "Konto", f"Jesteś zalogowany na {SITES[key][0]}.\n\nWylogować z aplikacji?") \
                     == QMessageBox.Yes:
                 self.logout_site(key)
             return
         if not self.web:
-            QMessageBox.information(self, "Logowanie", "Wbudowana przeglądarka niedostępna (brak QtWebEngine).")
+            T.info(self, "Logowanie", "Wbudowana przeglądarka niedostępna (brak QtWebEngine).")
             return
         url = api.board_url(self.guild) if key == "tibia" else \
             self.hunt.settings.base_url.rstrip("/") + "/hunt_sessions/new"
@@ -1328,23 +1456,25 @@ class MainWindow(QMainWindow):
 
     def install_update(self, rel: "updater.Release"):
         notes = rel.notes[:1200] + ("…" if len(rel.notes) > 1200 else "")
-        box = QMessageBox(QMessageBox.Information, "Nowa wersja",
-                          f"<b>Dostępna wersja {rel.version}</b> (masz {VERSION}).<br><br>"
-                          + (notes.replace("\n", "<br>") + "<br><br>" if notes else "")
-                          + "Aplikacja pobierze aktualizację, zamknie się na chwilę i uruchomi ponownie. "
-                            "Ustawienia, ulubione, snajpy i logowania zostaną.", QMessageBox.NoButton, self)
+        box = T.message(self, "info", "Nowa wersja",
+                        f"<b>Dostępna wersja {rel.version}</b> (masz {VERSION}).<br><br>"
+                        + (notes.replace("\n", "<br>") + "<br><br>" if notes else "")
+                        + "Aplikacja pobierze aktualizację, zamknie się na chwilę i uruchomi ponownie. "
+                          "Ustawienia, ulubione, snajpy i logowania zostaną.", QMessageBox.NoButton)
+        box.addButton("Później", QMessageBox.RejectRole).setCursor(Qt.PointingHandCursor)
         yes = box.addButton("Zaktualizuj teraz", QMessageBox.AcceptRole)
-        box.addButton("Później", QMessageBox.RejectRole)
+        yes.setObjectName("primary")
+        box.setDefaultButton(yes)
         box.exec()
         if box.clickedButton() is not yes:
             return
         if sys.platform != "win32":
-            QMessageBox.information(self, "Aktualizacja", f"Pobierz ręcznie: {rel.url}")
+            T.info(self, "Aktualizacja", f"Pobierz ręcznie: {rel.url}")
             return
         if not updater.can_write_app_dir():
-            QMessageBox.warning(self, "Aktualizacja",
-                                f"Nie mogę zapisywać w folderze aplikacji:\n{updater.APP_DIR}\n\n"
-                                "Przenieś folder aplikacji np. do Dokumentów (poza Program Files) i spróbuj ponownie.")
+            T.warn(self, "Aktualizacja",
+                   f"Nie mogę zapisywać w folderze aplikacji:\n{updater.APP_DIR}\n\n"
+                   "Przenieś folder aplikacji np. do Dokumentów (poza Program Files) i spróbuj ponownie.")
             return
         prog = QProgressDialog("Pobieranie aktualizacji…", None, 0, 0, self)
         prog.setWindowTitle("Aktualizacja")
@@ -1358,15 +1488,19 @@ class MainWindow(QMainWindow):
             try:
                 updater.launch(root)
             except Exception as e:
-                QMessageBox.warning(self, "Aktualizacja", f"Nie udało się uruchomić aktualizacji:\n{e}")
+                T.warn(self, "Aktualizacja", f"Nie udało się uruchomić aktualizacji:\n{e}")
                 return
             self.log(f"Instaluję wersję {rel.version} – aplikacja uruchomi się ponownie.", "Aktualizacje")
+            # pewne zakończenie procesu, nawet gdy jakiś wątek w tle (np. przeglądarka huntów) jeszcze działa –
+            # skrypt aktualizacji czeka właśnie na zamknięcie tego procesu
+            import threading
+            threading.Timer(4.0, os._exit, args=(0,)).start()
             self.close()
             QApplication.quit()
 
         def err(e):
             prog.close()
-            QMessageBox.warning(self, "Aktualizacja", f"Nie udało się pobrać aktualizacji:\n{e}\n\nMożesz pobrać ją ręcznie: {rel.url}")
+            T.warn(self, "Aktualizacja", f"Nie udało się pobrać aktualizacji:\n{e}\n\nMożesz pobrać ją ręcznie: {rel.url}")
         self.run_job(lambda: updater.prepare(rel), ok, err)
 
     def open_settings(self, section: int = 0):
@@ -1380,7 +1514,7 @@ class MainWindow(QMainWindow):
     def _snipe_from_nav(self, kind: str):
         if not self.cur_spot:
             self.go_page(0)
-            self.log("Najpierw wybierz resp z listy, potem „🎯 Snajpuj” albo „🔔 Obserwuj”.", role="warn")
+            self.log("Najpierw wybierz resp z listy, potem „Pilnuj”.", role="warn")
             return
         self.new_snipe(kind)
 
@@ -1390,7 +1524,7 @@ class MainWindow(QMainWindow):
             icon = QIcon(str(ICON_PATH)) if ICON_PATH.exists() else None
             if icon is None:
                 pm = QPixmap(32, 32)
-                pm.fill(QColor(C_ACCENT))
+                pm.fill(QColor(T.ACCENT))
                 icon = QIcon(pm)
             self.tray = QSystemTrayIcon(icon, self)
             self.tray.setToolTip(APP_NAME)
@@ -1398,7 +1532,7 @@ class MainWindow(QMainWindow):
             self.setWindowIcon(icon)
 
     def _update_clock(self):
-        self.clock_lbl.setText(now_server().strftime("Serwer: %H:%M:%S"))
+        self.clock_lbl.setText(now_server().strftime("Czas serwera %H:%M:%S"))
         if self.board:   # snajpy potrzebują zalogowania
             self.sniper.tick(now_server())
         if now_server().second == 0:
@@ -1408,7 +1542,7 @@ class MainWindow(QMainWindow):
 
     def _reservation_enabled(self, on: bool):
         for w in (self.start_time, self.len_slider, self.book_btn, self.open_btn,
-                  *self.sday_btns, *self.len_btns, *self.shift_btns, self.asap_btn, self.snipe_btn, self.watch_btn):
+                  *self.sday_btns, *self.len_btns, *self.shift_btns, self.asap_btn, self.snipe_btn):
             w.setEnabled(on)
 
     # ---------- dane
@@ -1456,7 +1590,7 @@ class MainWindow(QMainWindow):
         self.board_time = datetime.now()
         self.set_account("tibia", True)
         self._paint_account("tibia")
-        self.resp_sub.setText(f"Rezerwujesz jako <b style='color:{C_TEXT}'>{board.author or '?'}</b> · "
+        self.resp_sub.setText(f"Rezerwujesz jako <span style='color:{T.TEXT}'>{board.author or '?'}</span> · "
                               f"zaktualizowano {now_server():%H:%M:%S} · odświeżanie co {self.cfg.data['refresh_s']} s")
         self._notify_changes()
         self.sniper.on_board(now_server())
@@ -1476,6 +1610,9 @@ class MainWindow(QMainWindow):
                 pass
             self.set_account("tibia", False)
             self.resp_sub.setText("Nie jesteś zalogowany na tibialoot.com – kliknij konto w pasku po lewej.")
+            self.fav_list.hide()
+            self.fav_empty.set("user", "Zaloguj się na tibialoot.com", "Respy i rezerwacje pojawią się po zalogowaniu.")
+            self.fav_empty.show()
         else:
             self.log(f"✖ Błąd odświeżania: {e}")
 
@@ -1529,85 +1666,59 @@ class MainWindow(QMainWindow):
 
     # ---------- listy
     def _add_row(self, lst: QListWidget, bar: str, day: str, start: datetime, end: datetime, title: str,
-                 title_color: str, pill_text: str, pill_color: str, button=None, active=False) -> QListWidgetItem:
-        """Wiersz listy terminów: kolorowy pasek, dzień, godziny, opis, plakietka, opcjonalny przycisk."""
+                 title_role: str, right_text: str, button=None, active=False, data=None) -> QListWidgetItem:
+        """Wiersz listy terminów: kolorowy znacznik, godziny, dzień i opis, tekst po prawej, opcjonalny przycisk."""
         row = QFrame()
         row.setObjectName("rowActive" if active else "row")
-        row.setAttribute(Qt.WA_Hover, True)
-        h = QHBoxLayout(row)
-        h.setContentsMargins(0, 0, 10, 0)
-        h.setSpacing(10)
+        h = T.hbox(row, (T.S3, T.S2, T.S2 if button is not None else T.S3, T.S2), T.S3)
         stripe = QFrame()
-        stripe.setFixedWidth(4)
-        stripe.setStyleSheet(f"background:{bar}; border-radius:2px;")
+        stripe.setFixedWidth(3)
+        stripe.setStyleSheet(f"background:{bar}; border-radius:1px;")
         h.addWidget(stripe)
-        col = QVBoxLayout()
-        col.setContentsMargins(0, 6, 0, 6)
-        col.setSpacing(1)
+        col = T.vbox(spacing=0)
         end_txt = f"{end:%H:%M}"
         if end.date() != start.date():
-            end_txt = "24:00" if (end.hour, end.minute) == (0, 0) else \
-                f"{end:%H:%M}<span style='color:{C_MUTED}; font-size:11px; font-weight:600'>  ({self._daytxt(end)})</span>"
-        tl = QLabel(f"{start:%H:%M} – {end_txt}")
-        tl.setStyleSheet("font-size:14px; font-weight:800;")
+            end_txt = "24:00" if (end.hour, end.minute) == (0, 0) else f"{end:%H:%M} ({self._daytxt(end)})"
+        tl = T.label(f"{start:%H:%M} – {end_txt}", "strong")
         col.addWidget(tl)
-        sub = f"<span style='color:{C_MUTED}; font-weight:700'>{day.upper()}</span>"
+        sub = T.hbox(spacing=0)
+        d = T.label(day.capitalize() + (" · " if title else ""), "hint")
+        sub.addWidget(d)
         if title:
-            sub += f"<span style='color:{C_MUTED}'>  ·  </span><span style='color:{title_color}'>{title}</span>"
-        ti = QLabel(sub)
-        ti.setStyleSheet("font-size:12px;")
-        col.addWidget(ti)
+            ti = ElidedLabel(title)
+            ti.setObjectName("hint")
+            T.set_role(ti, title_role)
+            sub.addWidget(ti, 1)
+        else:
+            sub.addStretch(1)
+        col.addLayout(sub)
         h.addLayout(col, 1)
-        if pill_text:
-            p_ = pill(pill_text, pill_color)
-            p_.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-            h.addWidget(p_, 0, Qt.AlignVCenter)
+        if right_text:
+            r_ = T.label(right_text, "hint")
+            r_.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            h.addWidget(r_, 0, Qt.AlignVCenter)
         if button is not None:
             h.addWidget(button, 0, Qt.AlignVCenter)
-        for l in (tl, ti, stripe):
+        for l in row.findChildren(QLabel) + [stripe]:
             l.setAttribute(Qt.WA_TransparentForMouseEvents)
-        it = QListWidgetItem()
-        it.setSizeHint(QSize(100, 52))
-        lst.addItem(it)
-        lst.setItemWidget(it, row)
-        return it
+        row.setFixedHeight(T.S6 * 2 + T.S2 * 2 - 4)    # 52 px
+        return list_row(lst, row, data)
 
     def _mark_active_window(self, s: datetime):
         for i in range(self.free_list.count()):
             it = self.free_list.item(i)
-            w, row = it.data(Qt.UserRole), self.free_list.itemWidget(it)
+            w, row = it.data(Qt.UserRole), row_widget(it, self.free_list)
             if not w or row is None:
                 continue
-            name = "rowActive" if w[0] <= s <= w[1] else "row"
-            if row.objectName() != name:
-                row.setObjectName(name)
-                row.style().unpolish(row)
-                row.style().polish(row)
+            repolish(row, "rowActive" if w[0] <= s <= w[1] else "row")
 
     def _empty_row(self, lst: QListWidget, text: str):
-        it = QListWidgetItem(text)
-        it.setFlags(Qt.NoItemFlags)
-        it.setForeground(QColor(C_MUTED))
-        it.setTextAlignment(Qt.AlignCenter)
-        it.setSizeHint(QSize(100, 60))
-        lst.addItem(it)
+        list_message(lst, text)
 
-    def _res_row(self, text: str, r: Reservation) -> QWidget:
-        """Wiersz Twojej rezerwacji z przyciskiem „Usuń”."""
-        w = QWidget()
-        h = QHBoxLayout(w)
-        h.setContentsMargins(6, 2, 4, 2)
-        l = QLabel(text)
-        l.setStyleSheet(f"color:{C_MINE}; font-weight:600; background:transparent;")
-        h.addWidget(l, 1)
-        w.setMinimumHeight(36)
-        b = QPushButton("Usuń")
-        b.setObjectName("danger")
-        b.setFixedHeight(28)
-        b.setToolTip("Usuń tę rezerwację na stronie")
+    def _delete_button(self, r: Reservation) -> QPushButton:
+        b = T.icon_button("trash", "Usuń tę rezerwację na stronie", kind="danger")
         b.clicked.connect(lambda _=False, r=r: QTimer.singleShot(0, lambda: self.delete_reservation(r)))
-        h.addWidget(b)
-        return w
+        return b
 
     def _fill_mine(self):
         self.mine_list.clear()
@@ -1619,33 +1730,22 @@ class MainWindow(QMainWindow):
         for r in mine:
             sp = self.board.spots.get(r.spot_id)
             card = QFrame()
-            card.setObjectName("card")
-            v = QVBoxLayout(card)
-            v.setContentsMargins(12, 8, 10, 8)
-            top = QHBoxLayout()
-            n = QLabel(sp.name if sp else r.spot_id)
-            n.setStyleSheet("font-weight:700;")
-            n.setWordWrap(True)
-            top.addWidget(n, 1)
-            b = QPushButton("Usuń")
-            b.setObjectName("danger")
-            b.clicked.connect(lambda _=False, r=r: QTimer.singleShot(0, lambda: self.delete_reservation(r)))
-            top.addWidget(b)
-            v.addLayout(top)
-            t = QLabel(f"{self._daytxt(r.start)} {r.label}   ·   {r.status or ''}")
-            t.setStyleSheet(f"color:{C_MINE}; font-weight:600;")
-            v.addWidget(t)
-            it = QListWidgetItem()
-            it.setData(Qt.UserRole, r.spot_id)
-            it.setSizeHint(card.sizeHint() + QSize(0, 4))
-            self.mine_list.addItem(it)
-            self.mine_list.setItemWidget(it, card)
+            card.setObjectName("row")
+            card.setCursor(Qt.PointingHandCursor)
+            h = T.hbox(card, (T.S3, T.S2, T.S2, T.S2), T.S2)
+            col = T.vbox(spacing=0)
+            col.addWidget(T.label(sp.name if sp else r.spot_id, "strong", wrap=True))
+            col.addWidget(T.label(f"{self._daytxt(r.start).capitalize()} {r.label}" + (f" · {r.status}" if r.status else ""),
+                                  "hint", "info"))
+            h.addLayout(col, 1)
+            h.addWidget(self._delete_button(r), 0, Qt.AlignVCenter)
+            for l in card.findChildren(QLabel):
+                l.setAttribute(Qt.WA_TransparentForMouseEvents)
+            list_row(self.mine_list, card, r.spot_id)
+        self._fix_row_height(self.mine_list)
         if not mine:
-            it = QListWidgetItem("Nie masz nadchodzących rezerwacji.")
-            it.setForeground(QColor(C_MUTED))
-            it.setFlags(Qt.NoItemFlags)
-            self.mine_list.addItem(it)
-        self.tabs.setTabText(2, f"Moje ({len(mine)})" if mine else "Moje")
+            list_message(self.mine_list, "Nie masz nadchodzących rezerwacji.")
+        self.tabs.setTabText(2, f"Moje · {len(mine)}" if mine else "Moje")
 
     def delete_reservation(self, r: Reservation):
         if not r.can_delete:
@@ -1653,7 +1753,7 @@ class MainWindow(QMainWindow):
         sp = self.board.spots.get(r.spot_id) if self.board else None
         question = (f"Usunąć rezerwację {r.who} na {sp.name if sp else 'respie'}, "
                     f"{self._daytxt(r.start)} ({r.start:%d.%m}) {r.label}?")
-        if QMessageBox.question(self, "Usuń rezerwację", question) != QMessageBox.Yes:
+        if T.ask(self, "Usuń rezerwację", question, warn=True) != QMessageBox.Yes:
             return
         self.log(f"Usuwam rezerwację {r.label}…")
 
@@ -1671,7 +1771,7 @@ class MainWindow(QMainWindow):
                 QTimer.singleShot(500, self.refresh)
             else:
                 self.log("✖ Nie udało się usunąć: " + msg.splitlines()[0])
-                QMessageBox.warning(self, "Nie udało się usunąć", msg)
+                T.warn(self, "Nie udało się usunąć", msg)
 
         def fail(e):
             log_error(repr(e))
@@ -1688,16 +1788,22 @@ class MainWindow(QMainWindow):
         if not self.board:
             return
         favs = [self.board.spots[s] for s in self.cfg.favorites if s in self.board.spots]
+        self.fav_empty.set("star", "Brak ulubionych respów", "W zakładce „Wszystkie” kliknij gwiazdkę przy respie.",
+                           show_action=False)
         self.fav_empty.setVisible(not favs)
         self.fav_list.setVisible(bool(favs))
         for spot in favs:
             spot.reservations = self.spot_reservations(spot.id)
-            card = SpotCard(spot, self.board.author, self.toggle_fav)
-            it = QListWidgetItem()
-            it.setData(Qt.UserRole, spot.id)
-            it.setSizeHint(card.sizeHint() + QSize(0, 4))
-            self.fav_list.addItem(it)
-            self.fav_list.setItemWidget(it, card)
+            card = SpotCard(spot, self.board.author, self.toggle_fav, selected=spot.id == self.cur_spot)
+            list_row(self.fav_list, card, spot.id)
+        self._fix_row_height(self.fav_list)
+
+    def _mark_selected_fav(self):
+        for i in range(self.fav_list.count()):
+            it = self.fav_list.item(i)
+            row = row_widget(it, self.fav_list)
+            if row is not None:
+                repolish(row, "rowActive" if it.data(Qt.UserRole) == self.cur_spot else "row")
 
     def _fill_all(self):
         self.tree.clear()
@@ -1712,38 +1818,47 @@ class MainWindow(QMainWindow):
                 continue
             reg = regions.get(spot.region)
             if reg is None:
-                reg = QTreeWidgetItem(["▾", spot.region or "Inne"])
-                reg.setFirstColumnSpanned(True)
+                reg = QTreeWidgetItem(["", spot.region or "Inne"])
+                reg.setFirstColumnSpanned(False)
                 f = reg.font(1)
-                f.setBold(True)
+                f.setWeight(QFont.DemiBold)
                 reg.setFont(1, f)
+                reg.setForeground(1, QColor(T.TEXT))
                 self.tree.addTopLevelItem(reg)
                 regions[spot.region] = reg
             fav = spot.id in self.cfg.favorites
-            it = QTreeWidgetItem(["★" if fav else "☆", spot.name,
+            it = QTreeWidgetItem(["", spot.name,
                                   "Zajęty" if spot.is_taken else ("Wolny" if spot.status else ""),
                                   spot.next_text if spot.next_text not in ("Brak", "") else ""])
             it.setData(0, Qt.UserRole, spot.id)
-            it.setForeground(0, QColor(C_ACCENT if fav else C_MUTED))
-            it.setForeground(2, QColor(C_ACCENT if spot.is_taken else C_FREE))
+            it.setIcon(0, T.icon("star-fill", T.TEXT_2) if fav else T.icon("star", T.TEXT_3))
+            it.setForeground(1, QColor(T.TEXT_2))
+            it.setForeground(2, QColor(T.TEXT_3 if spot.is_taken else T.OK))
             it.setToolTip(0, "Kliknij, aby dodać/usunąć z ulubionych")
-            it.setToolTip(1, spot.name)
+            nxt = spot.next_text if spot.next_text not in ("Brak", "") else "brak"
+            it.setToolTip(1, f"{spot.name}\nNastępna: {nxt}")
             it.setToolTip(3, spot.next_text)
             reg.addChild(it)
         for reg in regions.values():
             reg.setExpanded(bool(q) or len(regions) < 4)
-            reg.setText(0, "▾" if reg.isExpanded() else "▸")
+            self._paint_region(reg)
+
+    @staticmethod
+    def _paint_region(reg: QTreeWidgetItem):
+        reg.setIcon(0, T.icon("chevron-down" if reg.isExpanded() else "chevron-right", T.TEXT_3))
+        n = reg.childCount()
+        reg.setText(2, str(n))
+        reg.setForeground(2, QColor(T.TEXT_3))
 
     def _tree_clicked(self, it: QTreeWidgetItem, col: int):
         sid = it.data(0, Qt.UserRole)
         if not sid:
             it.setExpanded(not it.isExpanded())
-            it.setText(0, "▾" if it.isExpanded() else "▸")
+            self._paint_region(it)
             return
         if col == 0:
             on = self.toggle_fav(sid)
-            it.setText(0, "★" if on else "☆")
-            it.setForeground(0, QColor(C_ACCENT if on else C_MUTED))
+            it.setIcon(0, T.icon("star-fill", T.TEXT_2) if on else T.icon("star", T.TEXT_3))
         else:
             self.select_spot(sid)
 
@@ -1761,7 +1876,9 @@ class MainWindow(QMainWindow):
         if not sid:
             return
         self.cur_spot = sid
+        self.detail_stack.setCurrentIndex(1)
         self._reservation_enabled(True)
+        self._mark_selected_fav()
         self._fetch_spot(sid)
         self._preselect_first_free()
         self._update_spot_view()
@@ -1842,7 +1959,7 @@ class MainWindow(QMainWindow):
             today = now.date()
             for i, b in enumerate(self.sday_btns):
                 d = today + timedelta(days=i)
-                b.setText(f"{'Dziś' if i == 0 else 'Jutro'}  {d:%d.%m}")
+                b.setText(f"{'Dziś' if i == 0 else 'Jutro'} {d:%d.%m}")
                 b.setChecked(d == start.date())
             self.start_time.set_time(QTime(start.hour, start.minute))
             self.len_slider.setEnabled(max_len >= 5)
@@ -1863,6 +1980,7 @@ class MainWindow(QMainWindow):
             self.cap_lbl.setText(f"Najwyżej {fmt_len(max_len)} – o {nxt:%H:%M} zaczyna się kolejna rezerwacja.")
         else:
             self.cap_lbl.setText("")
+        self.cap_lbl.setVisible(bool(self.cap_lbl.text()))
         self._on_time_changed()
 
     def _selection(self):
@@ -1875,15 +1993,27 @@ class MainWindow(QMainWindow):
             return
         now = now_server()
         lo, hi = booking_range(now)
-        if dt > start_limit(now):
-            self.status(f"Najpóźniejszy początek: {start_limit(now):%d.%m %H:%M}.", "warn")
+        lim = start_limit(now)
+        if dt > lim:
+            self.status(f"Najpóźniejszy początek: {lim:%d.%m %H:%M}.", "warn", timeout=5000)
             return
-        for win in free_windows(self.spot_reservations(self.cur_spot), lo, hi, now):
+        wins = free_windows(self.spot_reservations(self.cur_spot), lo, hi, now)
+        for win in wins:
             if win[0] <= dt <= win[1]:
                 s = max(dt, win[0])
                 self._set_range(s, min(s + MAX_LEN, win[1]))
+                if self._status_transient:
+                    self.status("")     # poprzednia podpowiedź z osi już nieaktualna
                 return
-        self.status("Ten moment jest zajęty albo w przeszłości.", "warn")
+        # kliknięcie w zajęty termin albo w przeszłość → najbliższy wolny moment po nim
+        nxt = next((w for w in wins if w[0] >= dt), None)
+        if nxt and nxt[0] <= lim:
+            self._set_range(nxt[0], min(nxt[0] + MAX_LEN, nxt[1]))
+            why = "Ten moment już minął" if dt < now else "Ten moment jest zajęty"
+            self.status(f"{why} – wybrano najbliższy wolny: {self._daytxt(nxt[0])} {nxt[0]:%H:%M}.",
+                        "info", timeout=5000)
+            return
+        self.status("Po tej godzinie nie ma już wolnego terminu do zarezerwowania.", "warn", timeout=5000)
 
     def _free_clicked(self, it):
         win = it.data(Qt.UserRole) if it is not None else None
@@ -1902,17 +2032,21 @@ class MainWindow(QMainWindow):
         else:
             problem = validate(res, s, e, now_server())
         end_day = "" if e.date() == s.date() else f" ({self._daytxt(e)})"
-        self.summary_lbl.setText(f"{self._daytxt(s).capitalize()} {s:%H:%M} → {e:%H:%M}{end_day}"
-                                 f"<span style='color:{C_MUTED}; font-weight:600; font-size:13px'>"
+        self.summary_lbl.setText(f"{self._daytxt(s).capitalize()} {s:%H:%M} – {e:%H:%M}{end_day}"
+                                 f"<span style='color:{T.TEXT_2}; font-weight:{T.W_REGULAR}'>"
                                  f"  ·  {fmt_len(self.sel_len) if self.sel_len else '—'}</span>")
         if problem:
-            self.valid_lbl.setText(f"<span style='color:#ef4444'>✕ {problem}</span>")
+            self.valid_lbl.setText(problem)
+            T.set_role(self.valid_lbl, "err")
+            self.valid_icon.setPixmap(T.pixmap("alert-circle", T.ERR, T.ICON))
             self.book_btn.setEnabled(False)
             self.book_btn.setText("Zarezerwuj")
         else:
-            self.valid_lbl.setText(f"<span style='color:{C_FREE}'>✓ Termin wolny</span>")
+            self.valid_lbl.setText("Termin wolny")
+            T.set_role(self.valid_lbl, "ok")
+            self.valid_icon.setPixmap(T.pixmap("check-circle", T.OK, T.ICON))
             self.book_btn.setEnabled(True)
-            self.book_btn.setText(f"Zarezerwuj  {s:%H:%M}–{e:%H:%M}")
+            self.book_btn.setText(f"Zarezerwuj {s:%H:%M}–{e:%H:%M}")
         self.timeline.set_data(res, (s, e), self.board.author if self.board else "")
         self._mark_active_window(s)
 
@@ -1923,33 +2057,27 @@ class MainWindow(QMainWindow):
         if not spot:
             return
         self.spot_title.setText(spot.name)
-        now_txt = (f"Teraz: zajęty – {spot.holder} {spot.holder_time}" if spot.is_taken
-                   else "Teraz: wolny" if spot.status else "")
+        now_txt = (f"teraz zajęty – {spot.holder} {spot.holder_time}" if spot.is_taken
+                   else "teraz wolny" if spot.status else "")
         self.spot_sub.setText(" · ".join(x for x in (spot.region, now_txt) if x))
 
         res = self.spot_reservations(spot.id)
         now = now_server()
         lo, hi = booking_range(now)
         lim = start_limit(now)
-        self.limit_lbl.setText(f"Możesz rezerwować z początkiem od teraz do {self._daytxt(lim)} {lim:%H:%M} (max 3 h).")
+        self.limit_lbl.setText(f"Początek od teraz do {self._daytxt(lim)} {lim:%H:%M}, najwyżej 3 h. Czas serwera (CET).")
         me = self.board.author
         self.res_list.clear()
         upcoming = [r for r in res if r.end > now and r.start < hi]
-        st_colors = {"Trwa": C_ACCENT, "Następna": "#a78bfa", "Zaplanowana": C_MUTED}
         for r in upcoming:
             mine = r.can_delete or (me and me in r.authors)
-            color = C_MINE if mine else st_colors.get(r.status, C_MUTED)
-            btn = None
-            if r.can_delete:
-                btn = QPushButton("Usuń")
-                btn.setObjectName("danger")
-                btn.setFixedHeight(28)
-                btn.clicked.connect(lambda _=False, r=r: QTimer.singleShot(0, lambda: self.delete_reservation(r)))
+            color = T.INFO if mine else (T.TEXT_2 if r.status == "Trwa" else T.TL_TAKEN)
+            btn = self._delete_button(r) if r.can_delete else None
             self._add_row(self.res_list, bar=color, day=self._daytxt(r.start), start=r.start, end=r.end,
-                          title=r.who + ("  (Ty)" if mine else ""), title_color=C_MINE if mine else C_TEXT,
-                          pill_text=r.status, pill_color=st_colors.get(r.status, C_MUTED), button=btn)
+                          title=r.who + (" (Ty)" if mine else ""), title_role="info" if mine else "muted",
+                          right_text=(r.status or "").lower(), button=btn)
         if not upcoming:
-            self._empty_row(self.res_list, "Brak nadchodzących rezerwacji – resp wolny przez całą dobę.")
+            self._empty_row(self.res_list, "Brak rezerwacji – wolne całą dobę.")
 
         self.free_list.clear()
         wins = free_windows(res, lo, hi, now)
@@ -1959,10 +2087,8 @@ class MainWindow(QMainWindow):
             note = f"start najpóźniej {self._daytxt(lim)} {lim:%H:%M}" if w[1] > lim else \
                 ("od teraz" if w[0] <= now + timedelta(minutes=1) else "")
             active = bool(sel[0] and w[0] <= sel[0] <= w[1])
-            it = self._add_row(self.free_list, bar=C_FREE, day=self._daytxt(w[0]), start=w[0], end=w[1],
-                               title=note, title_color=C_MUTED, pill_text=fmt_len(mins), pill_color=C_FREE,
-                               active=active)
-            it.setData(Qt.UserRole, w)
+            self._add_row(self.free_list, bar=T.OK, day=self._daytxt(w[0]), start=w[0], end=w[1],
+                          title=note, title_role="faint", right_text=fmt_len(mins), active=active, data=w)
         if not wins:
             self._empty_row(self.free_list, "Brak wolnych okien w najbliższej dobie.")
         self._apply()   # przytnij wybrany termin do aktualnych limitów
@@ -1981,9 +2107,9 @@ class MainWindow(QMainWindow):
             self._apply()
             return
         spot = self.board.spots[self.cur_spot]
-        if QMessageBox.question(self, "Potwierdź",
-                                f"Zarezerwować {spot.name}\n{s:%d.%m.%Y %H:%M} – {e:%H:%M}\n"
-                                f"dla {self.board.author}?") != QMessageBox.Yes:
+        if T.ask(self, "Potwierdź rezerwację",
+                 f"Zarezerwować {spot.name}\n{s:%d.%m.%Y %H:%M} – {e:%H:%M}\n"
+                 f"dla {self.board.author}?") != QMessageBox.Yes:
             return
         self.book_btn.setEnabled(False)
         sid = self.cur_spot
@@ -2017,15 +2143,14 @@ class MainWindow(QMainWindow):
         if not self.cur_spot or not self.board:
             return
         spot = self.board.spots[self.cur_spot]
-        sel = self._selection()
-        preset = sel if sel[0] else None
-        dlg = SnipeDialog(self, kind, spot.name, self.spot_reservations(spot.id), now_server(), TimeField, preset)
+        # domyślnie okno proponuje najbliższy termin, który jeszcze się nie otworzył
+        dlg = SnipeDialog(self, kind, spot.name, self.spot_reservations(spot.id), now_server(), TimeField, None)
         if dlg.exec() == QDialog.Accepted:
             job = dlg.job()
             job.update(spot_id=spot.id, spot_name=spot.name)
             self.sniper.add(job)
             self.go_page(1)
-            if kind == "watch":
+            if job["kind"] == "watch":
                 self.sniper.check_watches(now_server())
         import shiboken6
         shiboken6.delete(dlg)
@@ -2036,9 +2161,10 @@ class MainWindow(QMainWindow):
         if self.tray:
             self.tray.showMessage(title, text)
         QApplication.alert(self, 0)
-        box = QMessageBox(QMessageBox.Information, title, text, QMessageBox.Close, self)
+        box = T.message(self, "info", title, text, QMessageBox.Close)
         if hit:
             show = box.addButton("Pokaż i wybierz", QMessageBox.AcceptRole)
+            show.setObjectName("primary")
             def go(job=job, hit=hit):
                 self.select_spot(job["spot_id"])
                 self._apply(start=hit[0], want=int((min(hit[1], hit[0] + MAX_LEN) - hit[0]).total_seconds() // 60))
@@ -2049,6 +2175,9 @@ class MainWindow(QMainWindow):
         box.setModal(False)
         box.show()
 
+    SNIPE_STATUS = {"active": ("aktywny", None, "muted"), "done": ("gotowe", "ok", "ok"),
+                    "failed": ("nieudany", "err", "err"), "expired": ("minął", None, "faint")}
+
     def _fill_snipes(self):
         self.snipe_list.clear()
         now = now_server()
@@ -2058,79 +2187,77 @@ class MainWindow(QMainWindow):
         for j in jobs:
             n_active += j["status"] == "active"
             card = QFrame()
-            card.setObjectName("card")
-            lay = QVBoxLayout(card)
-            lay.setContentsMargins(12, 8, 12, 8)
-            lay.setSpacing(3)
-            top = QHBoxLayout()
-            icon = "🎯" if j["kind"] == "snipe" else "🔔"
-            name = QLabel(f"{icon} {j['spot_name']}")
-            name.setStyleSheet("font-weight:700;")
-            name.setWordWrap(True)
+            card.setObjectName("row")
+            lay = T.vbox(card, (T.S4, T.S3, T.S2, T.S3), T.S1)
+            top = T.hbox(spacing=T.S3)
+            top.addWidget(T.icon_label("bell" if (j["kind"] == "watch" or j.get("notify_only")) else "target", T.TEXT_2))
+            name = T.label(j["spot_name"], "strong", wrap=True)
             top.addWidget(name, 1)
-            colors = {"active": C_ACCENT, "done": C_FREE, "failed": "#ef4444", "expired": C_MUTED}
-            labels = {"active": "aktywny", "done": "gotowe", "failed": "nieudany", "expired": "minął"}
-            top.addWidget(pill(labels.get(j["status"], j["status"]), colors.get(j["status"], C_MUTED)))
-            rm = QPushButton("✕")
-            rm.setObjectName("star")
-            rm.setToolTip("Usuń")
-            rm.setFixedSize(24, 24)
+            text, pill_role, msg_role = self.SNIPE_STATUS.get(j["status"], (j["status"], None, "muted"))
+            top.addWidget(T.pill(text, pill_role))
+            rm = T.icon_button("x", "Usuń z listy")
             rm.clicked.connect(lambda _=False, jid=j["id"]: QTimer.singleShot(0, lambda: self.sniper.remove(jid)))
             top.addWidget(rm)
             lay.addLayout(top)
             if j["kind"] == "snipe":
                 s0, e0 = datetime.strptime(j["start"], "%Y-%m-%dT%H:%M"), datetime.strptime(j["end"], "%Y-%m-%dT%H:%M")
                 ft = fire_time(s0)
-                desc = f"{self._daytxt(s0)} {s0:%H:%M}–{e0:%H:%M}"
+                parts = [("Powiadomienie o otwarciu" if j.get("notify_only") else "Rezerwacja w chwili otwarcia")
+                         + f" · {self._daytxt(s0)} {s0:%H:%M}–{e0:%H:%M}"]
                 if j.get("follow"):
-                    desc += "  ·  podąża za rezerwacją przed nim"
+                    parts.append("podąża za rezerwacją przed nim")
                     if j.get("floor") or j.get("cap"):
                         fl = datetime.strptime(j["floor"], "%Y-%m-%dT%H:%M") if j.get("floor") else None
                         cp = datetime.strptime(j["cap"], "%Y-%m-%dT%H:%M") if j.get("cap") else None
-                        desc += "  ·  widełki " + (f"od {fl:%H:%M} " if fl else "") + (f"do {cp:%H:%M}" if cp else "")
+                        parts.append("widełki " + (f"od {fl:%H:%M} " if fl else "") + (f"do {cp:%H:%M}" if cp else ""))
                 if j["status"] == "active":
                     left = ft - now
                     if left.total_seconds() > 0:
                         h, rem = divmod(int(left.total_seconds()), 3600)
-                        desc += f"  ·  strzał {self._daytxt(ft)} {ft:%H:%M} (za {h} h {rem // 60} min)"
+                        parts.append(f"otwarcie {self._daytxt(ft)} {ft:%H:%M} (za {h} h {rem // 60} min)")
+                desc = " · ".join(p_.strip() for p_ in parts)
             else:
                 f0, t0 = datetime.strptime(j["from"], "%Y-%m-%dT%H:%M"), datetime.strptime(j["to"], "%Y-%m-%dT%H:%M")
-                desc = (f"{self._daytxt(f0)} {f0:%H:%M}–{t0:%H:%M}, min. {j['min_len']} min"
-                        + ("  ·  auto-rezerwacja" if j.get("auto") else ""))
-            d = QLabel(desc)
-            d.setStyleSheet(f"color:{C_MUTED};")
-            d.setWordWrap(True)
+                desc = ((f"Czekam na zwolnienie · {self._daytxt(f0)} {f0:%H:%M}–{t0:%H:%M} · min. {j['min_len']} min")
+                        + (" · zarezerwuję od razu" if j.get("auto") else " · dam znać"))
+            ind = T.S4 + T.S3      # tekst pod nazwą, nie pod ikoną
+            d = T.label(desc, "muted", wrap=True)
+            d.setContentsMargins(ind, 0, T.S2, 0)
             lay.addWidget(d)
             if j.get("msg"):
-                m = QLabel(j["msg"])
-                m.setWordWrap(True)
-                m.setStyleSheet(f"color:{colors.get(j['status'], C_TEXT)}; font-size:11px;")
+                m = T.label(j["msg"], "hint", msg_role, wrap=True)
+                m.setContentsMargins(ind, 0, T.S2, 0)
                 lay.addWidget(m)
-            it = QListWidgetItem()
-            it.setSizeHint(card.sizeHint() + QSize(0, 4))
-            self.snipe_list.addItem(it)
-            self.snipe_list.setItemWidget(it, card)
-        if not jobs:
-            it = QListWidgetItem("Nie masz jeszcze snajpów ani obserwacji.\n\n"
-                                 "Wybierz resp na stronie „Respy” i kliknij „🎯 Snajpuj” albo „🔔 Obserwuj”.")
-            it.setTextAlignment(Qt.AlignCenter)
-            it.setForeground(QColor(C_MUTED))
-            it.setFlags(Qt.NoItemFlags)
-            it.setSizeHint(QSize(200, 140))
-            self.snipe_list.addItem(it)
-        self.nav_btns[1].setText(f"🎯   Snajper  ({n_active})" if n_active else "🎯   Snajper")
+            list_row(self.snipe_list, card)
+            self._fix_row_height(self.snipe_list)
+        self.snipe_list.setVisible(bool(jobs))
+        self.snipe_empty.setVisible(not jobs)
+        self._n_active = n_active
+        self._fill_snipes_nav()
+
+    def _fill_snipes_nav(self):
+        n = getattr(self, "_n_active", 0)
+        full = f"Snajper · {n}" if n else "Snajper"
+        b = self.nav_btns[1]
+        b.set_label(full)
+        b.setToolTip(f"Snajper – aktywne: {n}" if n else "Snajper")
+
+    @staticmethod
+    def _fix_row_height(lst: QListWidget):
+        if isinstance(lst, AutoList):
+            lst.schedule_fix()
 
     def _booked(self, res, sid, s):
         ok, msg = res
         if ok:
             self.log(f"✔ {msg}")
         else:
-            QMessageBox.warning(self, "Nie udało się", msg)
+            T.warn(self, "Nie udało się", msg)
             self.log("✖ Rezerwacja odrzucona: " + msg.splitlines()[0])
             self._on_time_changed()
 
     def _book_err(self, e):
-        QMessageBox.warning(self, "Błąd", str(e))
+        T.warn(self, "Błąd", str(e))
         self._on_time_changed()
 
     def changeEvent(self, ev):
@@ -2146,6 +2273,7 @@ class MainWindow(QMainWindow):
         super().resizeEvent(ev)
         self._apply_responsive()
 
+
     def closeEvent(self, ev):
         if getattr(self, "hunt", None):
             self.hunt.shutdown()
@@ -2156,85 +2284,7 @@ class MainWindow(QMainWindow):
         super().closeEvent(ev)
 
 
-STYLE = f"""
-* {{ font-family: "Segoe UI", "Inter", sans-serif; font-size: 13px; color: {C_TEXT}; }}
-QMainWindow, QDialog, QWidget {{ background: {C_BG}; }}
-QTabWidget::pane {{ border: none; }}
-QTabBar::tab {{ background: transparent; color: {C_MUTED}; padding: 8px 14px; border-bottom: 2px solid transparent; font-weight:600; }}
-QFrame#sidebar {{ background: #131417; border-right: 1px solid {C_BORDER}; }}
-QFrame#sidebar QLabel {{ background: transparent; }}
-QPushButton#nav {{ text-align: left; padding: 9px 12px; border: none; border-radius: 8px; background: transparent;
-                  font-size: 14px; font-weight: 600; color: {C_MUTED}; }}
-QPushButton#nav:hover {{ background: #1c1d21; color: {C_TEXT}; }}
-QPushButton#nav:checked {{ background: rgba(249,115,22,0.14); color: {C_ACCENT}; }}
-QPushButton#update {{ text-align: left; padding: 9px 12px; border-radius: 8px; font-weight: 700; color: #111;
-                     background: {C_FREE}; border: none; }}
-QPushButton#update:hover {{ background: #4ade80; }}
-QLabel#todayTile {{ background: {C_PANEL}; border: 1px solid {C_BORDER}; border-radius: 10px; color: {C_MUTED}; font-weight: 700; }}
-QLabel#todayTile:hover {{ border-color: {C_ACCENT}; }}
-QPushButton#account {{ text-align: left; background: {C_PANEL}; border: 1px solid {C_BORDER}; border-radius: 8px; padding: 0; }}
-QPushButton#account:hover {{ border-color: #4a4d55; }}
-QListWidget#nav {{ background: transparent; border: none; outline: 0; }}
-QListWidget#nav::item {{ padding: 9px 10px; border-radius: 8px; color: {C_MUTED}; font-weight: 600; }}
-QListWidget#nav::item:selected {{ background: rgba(249,115,22,0.14); color: {C_ACCENT}; }}
-QFrame#footer {{ border-top: 1px solid {C_BORDER}; background: #131417; }}
-QStatusBar {{ border-top: 1px solid {C_BORDER}; background: #131417; }}
-QStatusBar QLabel {{ padding: 2px 10px; }}
-QPlainTextEdit {{ background: {C_PANEL}; border: 1px solid {C_BORDER}; border-radius: 8px; padding: 4px; }}
-QComboBox {{ background: {C_PANEL}; border: 1px solid {C_BORDER}; border-radius: 6px; padding: 5px 8px; }}
-QComboBox QAbstractItemView {{ background: {C_PANEL}; selection-background-color: #26282d; }}
-QRadioButton::indicator {{ width: 14px; height: 14px; border-radius: 8px; border: 1px solid #4a4d55; background: {C_PANEL}; }}
-QRadioButton::indicator:checked {{ background: {C_ACCENT}; border-color: {C_ACCENT}; }}
-QScrollArea {{ background: transparent; }}
-QTabBar::tab:selected {{ color: {C_TEXT}; border-bottom: 2px solid {C_ACCENT}; }}
-QListWidget, QTreeWidget {{ background: {C_PANEL}; border: 1px solid {C_BORDER}; border-radius: 8px; padding: 4px; }}
-QListWidget::item {{ padding: 4px; border-radius: 6px; }}
-QListWidget::item:selected, QTreeWidget::item:selected {{ background: #26282d; }}
-QListWidget::item:hover, QTreeWidget::item:hover {{ background: #1f2125; }}
-QHeaderView::section {{ background: {C_PANEL}; color: {C_MUTED}; border: none; padding: 4px; }}
-QFrame#card {{ background: {C_PANEL}; border: 1px solid {C_BORDER}; border-radius: 10px; }}
-QFrame#card QLabel, QFrame#card QCheckBox, QFrame#card QRadioButton {{ background: transparent; }}
-QScrollBar:vertical {{ background: transparent; width: 10px; margin: 2px; }}
-QScrollBar::handle:vertical {{ background: #33363c; border-radius: 4px; min-height: 30px; }}
-QScrollBar:horizontal {{ background: transparent; height: 10px; margin: 2px; }}
-QScrollBar::handle:horizontal {{ background: #33363c; border-radius: 4px; min-width: 30px; }}
-QScrollBar::add-line, QScrollBar::sub-line, QScrollBar::add-page, QScrollBar::sub-page {{ background: none; width: 0; height: 0; }}
-QPushButton {{ background: #1d1f23; border: 1px solid {C_BORDER}; border-radius: 7px; padding: 6px 12px; }}
-QPushButton:hover {{ border-color: #4a4d55; }}
-QPushButton:disabled {{ color: #555; }}
-QPushButton#primary {{ background: {C_ACCENT}; color: #111; border: none; font-weight: 700; padding: 8px 22px; }}
-QPushButton#primary:disabled {{ background: #3a2a1f; color: #776; }}
-QPushButton#seg:checked {{ border-color: {C_ACCENT}; color: {C_ACCENT}; }}
-QPushButton#small {{ padding: 5px 10px; }}
-QListWidget#rows {{ padding: 6px; }}
-QListWidget#rows::item, QListWidget#rows::item:hover, QListWidget#rows::item:selected {{ background: transparent; padding: 0; }}
-QFrame#row, QFrame#rowActive {{ background: #1c1d21; border: 1px solid #24262b; border-radius: 8px; }}
-QFrame#row:hover {{ background: #222429; border-color: #3a3d44; }}
-QFrame#rowActive {{ background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.45); }}
-QFrame#row QLabel, QFrame#rowActive QLabel {{ background: transparent; border: none; }}
-QPushButton#danger {{ padding: 4px 12px; color: #fca5a5; border-color: rgba(239,68,68,0.45); background: rgba(239,68,68,0.10); }}
-QPushButton#danger:hover {{ background: rgba(239,68,68,0.22); border-color: #ef4444; color: #fff; }}
-QPushButton#step {{ padding: 5px 0; min-width: 44px; font-weight: 600; }}
-QPushButton#chip {{ padding: 5px 10px; border-radius: 14px; }}
-QPushButton#chip:checked {{ background: rgba(249,115,22,0.18); border-color: {C_ACCENT}; color: {C_ACCENT}; font-weight: 700; }}
-QPushButton#chip:disabled {{ color: #4a4d55; border-color: #222428; }}
-QLineEdit#timefield {{ padding: 2px 4px; font-weight: 700; }}
-QLineEdit#timefield:disabled {{ color: #555; }}
-QLineEdit#bigtime {{ font-size: 16px; font-weight: 800; padding: 3px 4px; border-color: {C_ACCENT}; }}
-QSlider::groove:horizontal {{ height: 6px; background: {C_BORDER}; border-radius: 3px; }}
-QSlider::sub-page:horizontal {{ background: {C_ACCENT}; border-radius: 3px; }}
-QSlider::handle:horizontal {{ width: 16px; margin: -6px 0; border-radius: 8px; background: {C_TEXT}; }}
-QSlider::handle:horizontal:disabled {{ background: #555; }}
-QPushButton#star {{ background: transparent; border: none; color: {C_ACCENT}; font-size: 16px; padding: 0; }}
-QLineEdit, QDateEdit, QDateTimeEdit, QSpinBox {{ background: {C_PANEL}; border: 1px solid {C_BORDER}; border-radius: 6px; padding: 5px 8px; }}
-QAbstractSpinBox QLineEdit {{ padding: 0; border: none; background: transparent; }}
-QLineEdit:focus, QDateTimeEdit:focus {{ border-color: {C_ACCENT}; }}
-QCheckBox::indicator {{ width: 15px; height: 15px; border: 1px solid #4a4d55; border-radius: 4px; background: {C_PANEL}; }}
-QCheckBox::indicator:checked {{ background: {C_ACCENT}; border-color: {C_ACCENT}; }}
-QSplitter::handle {{ background: {C_BG}; }}
-QStatusBar {{ color: {C_MUTED}; }}
-QToolTip {{ background: #222; color: {C_TEXT}; border: 1px solid {C_BORDER}; }}
-"""
+STYLE = ""     # arkusz stylów: theme.stylesheet()
 
 
 LOG_PATH: Path | None = None
@@ -2265,7 +2315,7 @@ def main():
     if ICON_PATH.exists():
         app.setWindowIcon(QIcon(str(ICON_PATH)))
     app.setOrganizationName("TibiaAppsCompanion")
-    app.setStyleSheet(STYLE)
+    T.install(app)
     paths.setup()
     try:
         MIGRATION_MSGS[:] = paths.migrate()

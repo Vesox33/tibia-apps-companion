@@ -4,51 +4,60 @@ from __future__ import annotations
 import os
 import sys
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtGui import QTextCursor
 from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QDialog, QFrame, QHBoxLayout, QLabel, QLineEdit,
-                               QListWidget, QMessageBox, QPlainTextEdit, QPushButton, QRadioButton,
+                               QListWidget, QListWidgetItem, QMessageBox, QPlainTextEdit, QPushButton, QRadioButton,
                                QScrollArea, QSlider, QSpinBox, QStackedWidget, QVBoxLayout, QWidget)
 
 import api
+import theme as T
 
-C_TEXT, C_MUTED, C_FREE, C_ERR, C_PANEL, C_BORDER = "#e7e7ea", "#8b8f98", "#22c55e", "#ef4444", "#17181b", "#2a2c31"
-
-SECTIONS = ["👤   Konta", "📅   Rezerwacje", "📤   Hunty", "🔊   Dźwięk i powiadomienia", "⬆   Aktualizacje", "🗂   Dane i log"]
+SECTIONS = [("user", "Konta"), ("calendar", "Rezerwacje"), ("upload", "Hunty"), ("volume", "Dźwięk"),
+            ("update", "Aktualizacje"), ("file", "Dane i log")]
+LABEL_W = T.S6 * 7          # kolumna etykiet – pola w każdej sekcji zaczynają się w tej samej linii
 
 
 def h1(text, sub=None):
     w = QWidget()
-    v = QVBoxLayout(w)
-    v.setContentsMargins(0, 0, 0, 8)
-    t = QLabel(text)
-    t.setStyleSheet("font-size:18px; font-weight:800;")
-    v.addWidget(t)
+    v = T.vbox(w, spacing=T.S1)
+    v.addWidget(T.label(text, "pageTitle"))
     if sub:
-        s = QLabel(sub)
-        s.setWordWrap(True)
-        s.setStyleSheet(f"color:{C_MUTED};")
-        v.addWidget(s)
+        v.addWidget(T.label(sub, "muted", wrap=True))
     return w
 
 
-def group(title: str) -> tuple[QFrame, QVBoxLayout]:
-    f = QFrame()
-    f.setObjectName("card")
-    v = QVBoxLayout(f)
-    v.setContentsMargins(14, 10, 14, 12)
-    v.setSpacing(6)
-    t = QLabel(title.upper())
-    t.setStyleSheet(f"color:{C_MUTED}; font-size:11px; font-weight:700;")
-    v.addWidget(t)
+def group(title: str) -> tuple[QWidget, QVBoxLayout]:
+    """Grupa ustawień: tytuł i treść – oddzielona odstępem, bez ramki."""
+    f = QWidget()
+    v = T.vbox(f, spacing=T.S3)
+    v.addWidget(T.label(title, "title"))
     return f, v
 
 
 def hint(text: str) -> QLabel:
-    l = QLabel(text)
-    l.setWordWrap(True)
-    l.setStyleSheet(f"color:{C_MUTED}; font-size:11px;")
-    return l
+    return T.hint(text)
+
+
+def form_row(label: str, *widgets, stretch: bool = False) -> QHBoxLayout:
+    r = T.hbox(spacing=T.S2)
+    l = T.label(label, "muted")
+    l.setFixedWidth(LABEL_W)
+    l.setMinimumHeight(T.CONTROL_H)
+    r.addWidget(l, 0, Qt.AlignTop)
+    for w in widgets:
+        r.addWidget(w, 1 if stretch else 0)
+    if not stretch:
+        r.addStretch(1)
+    return r
+
+
+def indented(widget) -> QHBoxLayout:
+    """Treść w kolumnie pól (pod polami, nie pod etykietami)."""
+    r = T.hbox(spacing=0)
+    r.addSpacing(LABEL_W + T.S2)
+    r.addWidget(widget, 1)
+    return r
 
 
 class SettingsDialog(QDialog):
@@ -58,41 +67,43 @@ class SettingsDialog(QDialog):
         self.cfg = win.cfg
         self.hs = win.hunt.settings if win.hunt else None
         self.setWindowTitle("Ustawienia – Tibia Apps Companion")
-        self.resize(860, 600)
+        self.resize(880, 620)
 
-        outer = QVBoxLayout(self)
-        outer.setContentsMargins(0, 0, 0, 0)
-        outer.setSpacing(0)
-        body = QHBoxLayout()
-        body.setSpacing(0)
+        outer = T.vbox(self)
+        body = T.hbox()
         outer.addLayout(body, 1)
 
         side = QFrame()
         side.setObjectName("sidebar")
-        side.setFixedWidth(230)
-        sv = QVBoxLayout(side)
-        sv.setContentsMargins(12, 18, 12, 12)
-        t = QLabel("Ustawienia")
-        t.setStyleSheet("font-size:18px; font-weight:800;")
+        side.setFixedWidth(T.S6 * 9)
+        
+        sv = T.vbox(side, (T.S3, T.S6, T.S3, T.S3), T.S4)
+        t = T.label("Ustawienia", "title")
+        t.setContentsMargins(T.S3, 0, 0, 0)
         sv.addWidget(t)
-        sv.addSpacing(10)
         self.nav = QListWidget()
         self.nav.setObjectName("nav")
-        self.nav.addItems(SECTIONS)
+        self.nav.setIconSize(QSize(T.ICON_NAV, T.ICON_NAV))
+        self.nav.setSpacing(0)
+        self.nav.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.nav.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        for ic, name in SECTIONS:
+            it = QListWidgetItem(T.icon(ic, T.TEXT_2, T.ICON_NAV, active=T.TEXT), "  " + name)
+            self.nav.addItem(it)
+        self.nav.setCursor(Qt.PointingHandCursor)
         sv.addWidget(self.nav, 1)
         body.addWidget(side)
 
         self.stack = QStackedWidget()
         for build in (self.page_accounts, self.page_resp, self.page_hunt, self.page_sound, self.page_update, self.page_data):
             page = QWidget()
-            lay = QVBoxLayout(page)
-            lay.setContentsMargins(26, 20, 26, 12)
-            lay.setSpacing(12)
+            lay = T.vbox(page, (T.S6, T.S6, T.S6, T.S6), T.S6)
             build(lay)
             lay.addStretch(1)
             sc = QScrollArea()
             sc.setWidgetResizable(True)
             sc.setFrameShape(QFrame.NoFrame)
+            sc.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
             sc.setWidget(page)
             self.stack.addWidget(sc)
         body.addWidget(self.stack, 1)
@@ -101,14 +112,13 @@ class SettingsDialog(QDialog):
 
         foot = QFrame()
         foot.setObjectName("footer")
-        fl = QHBoxLayout(foot)
-        fl.setContentsMargins(16, 10, 16, 10)
+        fl = T.hbox(foot, (T.S6, T.S3, T.S6, T.S3), T.S2)
         fl.addWidget(hint("Zmiany zapisują się po kliknięciu „Zapisz”. Konta i dźwięk działają od razu."), 1)
-        c = QPushButton("Anuluj")
+        c = T.button("Anuluj")
         c.clicked.connect(self.reject)
         fl.addWidget(c)
-        ok = QPushButton("Zapisz")
-        ok.setObjectName("primary")
+        ok = T.button("Zapisz", kind="primary")
+        ok.setDefault(True)
         ok.clicked.connect(self.save)
         fl.addWidget(ok)
         outer.addWidget(foot)
@@ -120,31 +130,29 @@ class SettingsDialog(QDialog):
                                   "Aplikacja nie zna Twoich haseł; sesja jest zapamiętywana."))
         self.acc_rows = {}
         from app import SITES
+        box = T.vbox(spacing=T.S2)
         for key in ("tibia", "hunt"):
             name, purpose = SITES[key]
             f = QFrame()
-            f.setObjectName("card")
-            h = QHBoxLayout(f)
-            h.setContentsMargins(16, 12, 16, 12)
-            dot = QLabel("●")
+            f.setObjectName("panel")
+            h = T.hbox(f, (T.S4, T.S3, T.S3, T.S3), T.S3)
+            dot = QLabel()
+            dot.setFixedSize(8, 8)
             h.addWidget(dot)
-            col = QVBoxLayout()
-            col.setSpacing(1)
-            n = QLabel(name)
-            n.setStyleSheet("font-size:15px; font-weight:800;")
-            col.addWidget(n)
-            p = QLabel(f"Do: {purpose}")
-            p.setStyleSheet(f"color:{C_MUTED};")
-            col.addWidget(p)
-            st = QLabel("")
+            col = T.vbox(spacing=0)
+            col.addWidget(T.label(name, "strong"))
+            st = T.label("", "hint")
             col.addWidget(st)
             h.addLayout(col, 1)
-            btn = QPushButton()
-            btn.setMinimumWidth(120)
+            h.addWidget(T.label(f"Do: {purpose}", "hint"))
+            h.addSpacing(T.S3)
+            btn = T.button()
+            btn.setMinimumWidth(T.S6 * 4)
             btn.clicked.connect(lambda _=False, k=key: self._acc_clicked(k))
             h.addWidget(btn)
-            lay.addWidget(f)
+            box.addWidget(f)
             self.acc_rows[key] = (dot, st, btn)
+        lay.addLayout(box)
         lay.addWidget(hint("Formularz huntów wypełnia osobne okno przeglądarki (Edge/Chrome). Sesję z logowania "
                            "w aplikacji przekazuję mu automatycznie, a jeśli zalogujesz się w tamtym oknie – "
                            "przenoszę ją z powrotem do aplikacji."))
@@ -153,17 +161,14 @@ class SettingsDialog(QDialog):
     def refresh_accounts(self):
         for key, (dot, st, btn) in self.acc_rows.items():
             s = self.win.accounts.get(key)
-            color = C_FREE if s else (C_MUTED if s is None else C_ERR)
-            dot.setStyleSheet(f"color:{color}; font-size:18px;")
+            color, role = (T.OK, "ok") if s else ((T.TEXT_3, "faint") if s is None else (T.ERR, "err"))
+            dot.setPixmap(T.dot(color, 8))
             text = "Zalogowano" if s else ("Sprawdzam…" if s is None else "Niezalogowano")
             if key == "tibia" and s and self.win.board and self.win.board.author:
                 text += f" · rezerwujesz jako {self.win.board.author}"
             st.setText(text)
-            st.setStyleSheet(f"color:{color}; font-weight:600;")
+            T.set_role(st, role)
             btn.setText("Wyloguj" if s else "Zaloguj")
-            btn.setObjectName("" if s else "primary")
-            btn.style().unpolish(btn)
-            btn.style().polish(btn)
 
     def _acc_clicked(self, key):
         self.win.login_site(key)
@@ -173,16 +178,14 @@ class SettingsDialog(QDialog):
     def page_resp(self, lay):
         lay.addWidget(h1("Rezerwacje", "Tablica respów z tibialoot.com."))
         g, v = group("Odświeżanie")
-        r = QHBoxLayout()
-        r.addWidget(QLabel("Odświeżaj tablicę co"))
         self.sp_refresh = QSpinBox()
         self.sp_refresh.setRange(30, 3600)
         self.sp_refresh.setSuffix(" s")
+        self.sp_refresh.setFixedWidth(T.S6 * 4)
         self.sp_refresh.setValue(int(self.cfg.data["refresh_s"]))
-        r.addWidget(self.sp_refresh)
-        r.addStretch(1)
-        v.addLayout(r)
-        v.addWidget(hint("Od tego zależy, jak szybko obserwacja zauważy zwolnienie. Minimum 30 s, żeby nie obciążać strony."))
+        v.addLayout(form_row("Odświeżaj tablicę co", self.sp_refresh))
+        v.addLayout(indented(hint("Od tego zależy, jak szybko obserwacja zauważy zwolnienie. "
+                                  "Minimum 30 s, żeby nie obciążać strony.")))
         lay.addWidget(g)
 
         g, v = group("Powiadomienia")
@@ -192,19 +195,14 @@ class SettingsDialog(QDialog):
         lay.addWidget(g)
 
         g, v = group("Zaawansowane")
-        r = QHBoxLayout()
-        r.addWidget(QLabel("ID serwera Discord"))
         self.ed_guild = QLineEdit(self.cfg.data["guild_id"])
-        r.addWidget(self.ed_guild, 1)
-        v.addLayout(r)
-        r = QHBoxLayout()
-        r.addWidget(QLabel("Ciasteczko awaryjne"))
+        v.addLayout(form_row("ID serwera Discord", self.ed_guild, stretch=True))
         self.ed_cookie = QLineEdit(self.cfg.data.get("cookie_header", ""))
         self.ed_cookie.setEchoMode(QLineEdit.Password)
         self.ed_cookie.setPlaceholderText("zostaw puste")
-        r.addWidget(self.ed_cookie, 1)
-        v.addLayout(r)
-        v.addWidget(hint("Ciasteczko wpisuj tylko, gdy logowanie w aplikacji nie działa – przełącza pobieranie na tryb zapasowy."))
+        v.addLayout(form_row("Ciasteczko awaryjne", self.ed_cookie, stretch=True))
+        v.addLayout(indented(hint("Ciasteczko wpisuj tylko, gdy logowanie w aplikacji nie działa – "
+                                  "przełącza pobieranie na tryb zapasowy.")))
         lay.addWidget(g)
 
     # ------------------------------------------------------------ Hunty
@@ -250,7 +248,7 @@ class SettingsDialog(QDialog):
         v.addWidget(self.rb_multi)
         self.txt_chars = QPlainTextEdit("\n".join(s.characters))
         self.txt_chars.setPlaceholderText("Jedna postać w linii – dokładnie jak na stronie")
-        self.txt_chars.setMaximumHeight(96)
+        self.txt_chars.setFixedHeight(T.S6 * 4)
         self.txt_chars.setEnabled(s.multi_char)
         self.rb_multi.toggled.connect(self.txt_chars.setEnabled)
         v.addWidget(self.txt_chars)
@@ -273,22 +271,22 @@ class SettingsDialog(QDialog):
     def page_sound(self, lay):
         lay.addWidget(h1("Dźwięk i powiadomienia", "Jedna głośność dla wszystkich dźwięków aplikacji."))
         g, v = group("Głośność")
-        r = QHBoxLayout()
+        r = T.hbox(spacing=T.S3)
         self.vol = QSlider(Qt.Horizontal)
         self.vol.setRange(0, 100)
         self.vol.setSingleStep(5)
         self.vol.setPageStep(10)
         self.vol.setValue(int(self.cfg.data.get("volume", 80)))
         r.addWidget(self.vol, 1)
-        self.vol_lbl = QLabel()
-        self.vol_lbl.setMinimumWidth(70)
+        self.vol_lbl = T.label("", "strong")
+        self.vol_lbl.setFixedWidth(T.S6 * 3)
         r.addWidget(self.vol_lbl)
         v.addLayout(r)
-        r = QHBoxLayout()
-        for name, label in (("alarm", "▶ Alarm snajpera"), ("clip", "▶ Przechwycony analizator"),
-                            ("clip_dup", "▶ Analizator już wysłany")):
-            b = QPushButton(label)
-            b.setObjectName("small")
+        r = T.hbox(spacing=T.S2)
+        r.addWidget(T.label("Posłuchaj:", "muted"))
+        for name, label in (("alarm", "Alarm snajpera"), ("clip", "Przechwycony analizator"),
+                            ("clip_dup", "Analizator już wysłany")):
+            b = T.button(label, "play", "ghost")
             b.clicked.connect(lambda _=False, n=name: self.win.sounds.play(n))
             r.addWidget(b)
         r.addStretch(1)
@@ -323,16 +321,15 @@ class SettingsDialog(QDialog):
         lay.addWidget(h1("Aktualizacje", "Nowe wersje instalują się automatycznie: aplikacja pobiera je, zamyka się na chwilę "
                                          "i uruchamia ponownie. Ustawienia i dane zostają bez zmian."))
         g, v = group("Twoja wersja")
-        r = QHBoxLayout()
-        cur = QLabel(f"<span style='font-size:20px; font-weight:800'>{VERSION}</span>")
-        r.addWidget(cur)
+        r = T.hbox(spacing=T.S3)
+        r.addWidget(T.label(f"Tibia Apps Companion {VERSION}", "strong"))
         r.addStretch(1)
-        self.upd_btn = QPushButton("Sprawdź teraz")
+        self.upd_btn = T.button("Sprawdź teraz", "refresh")
         self.upd_btn.clicked.connect(self._check_now)
         r.addWidget(self.upd_btn)
         v.addLayout(r)
-        self.upd_lbl = QLabel("")
-        self.upd_lbl.setWordWrap(True)
+        self.upd_lbl = T.label("", "muted", wrap=True)
+        self.upd_lbl.hide()
         v.addWidget(self.upd_lbl)
         self.chk_auto_upd = QCheckBox("Sprawdzaj automatycznie (przy starcie i co 6 godzin)")
         self.chk_auto_upd.setChecked(bool(self.cfg.data.get("auto_update", True)))
@@ -344,16 +341,21 @@ class SettingsDialog(QDialog):
     def _check_now(self):
         self.upd_btn.setEnabled(False)
         self.upd_lbl.setText("Sprawdzam…")
+        T.set_role(self.upd_lbl, "muted")
+        self.upd_lbl.show()
 
         def done(rel, err):
             try:
                 self.upd_btn.setEnabled(True)
                 if err:
-                    self.upd_lbl.setText(f"<span style='color:{C_ERR}'>✕ {err}</span>")
+                    self.upd_lbl.setText(f"Nie udało się sprawdzić: {err}")
+                    T.set_role(self.upd_lbl, "err")
                 elif rel:
-                    self.upd_lbl.setText(f"<span style='color:{C_FREE}'>Dostępna wersja {rel.version}</span>")
+                    self.upd_lbl.setText(f"Dostępna wersja {rel.version}.")
+                    T.set_role(self.upd_lbl, "ok")
                 else:
-                    self.upd_lbl.setText(f"<span style='color:{C_FREE}'>✓ Masz najnowszą wersję.</span>")
+                    self.upd_lbl.setText("Masz najnowszą wersję.")
+                    T.set_role(self.upd_lbl, "ok")
             except RuntimeError:
                 pass   # okno ustawień już zamknięte
         self.win.check_updates(silent=False, done=done)
@@ -367,25 +369,26 @@ class SettingsDialog(QDialog):
         if self.hs:
             rows.append(("Hunty: ustawienia, historia, spawny", app_dir()))
         for label, path in rows:
-            r = QHBoxLayout()
-            l = QLabel(f"{label}<br><span style='color:{C_MUTED}; font-size:11px'>{path}</span>")
-            l.setTextInteractionFlags(Qt.TextSelectableByMouse)
-            r.addWidget(l, 1)
+            r = T.hbox(spacing=T.S3)
+            col = T.vbox(spacing=0)
+            col.addWidget(T.label(label))
+            pl = T.label(str(path), "hint", wrap=True)
+            pl.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            col.addWidget(pl)
+            r.addLayout(col, 1)
             if sys.platform == "win32":
-                b = QPushButton("Otwórz")
-                b.setObjectName("small")
+                b = T.button("Otwórz", "folder")
                 b.clicked.connect(lambda _=False, p=path: os.startfile(p))
-                r.addWidget(b)
+                r.addWidget(b, 0, Qt.AlignVCenter)
             v.addLayout(r)
         lay.addWidget(g)
 
         if self.win.hunt:
             g, v = group("Spawny")
             db = self.win.hunt.db
-            r = QHBoxLayout()
-            r.addWidget(QLabel(f"Wersja {db.version or '?'} · {len(db.spots)} lokacji · aktualizacja raz na dobę"), 1)
-            b = QPushButton("Aktualizuj teraz")
-            b.setObjectName("small")
+            r = T.hbox(spacing=T.S3)
+            r.addWidget(T.label(f"Wersja {db.version or '?'} · {len(db.spots)} lokacji · aktualizacja raz na dobę"), 1)
+            b = T.button("Aktualizuj teraz", "refresh")
             b.clicked.connect(lambda: self.win.hunt.update_spawns(force=True))
             r.addWidget(b)
             v.addLayout(r)
@@ -394,8 +397,8 @@ class SettingsDialog(QDialog):
         g, v = group("Log")
         self.log_view = QPlainTextEdit()
         self.log_view.setReadOnly(True)
-        self.log_view.setObjectName("analyzer")
-        self.log_view.setMinimumHeight(220)
+        self.log_view.setObjectName("mono")
+        self.log_view.setMinimumHeight(T.S6 * 9)
         self.log_view.setPlainText("\n".join(self.win.log_lines))
         self.log_view.moveCursor(QTextCursor.End)
         v.addWidget(self.log_view)
@@ -428,7 +431,7 @@ class SettingsDialog(QDialog):
             chars = [l.strip() for l in self.txt_chars.toPlainText().splitlines() if l.strip()]
             if self.rb_multi.isChecked() and not chars:
                 self.nav.setCurrentRow(2)  # Hunty
-                QMessageBox.warning(self, "Postacie", "Wpisz przynajmniej jedną postać albo wybierz „Jedna postać”.")
+                T.warn(self, "Postacie", "Wpisz przynajmniej jedną postać albo wybierz „Jedna postać”.")
                 return
             old_browser = s.browser_channel
             s.auto_save = self.rb_auto.isChecked()

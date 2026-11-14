@@ -14,10 +14,13 @@ Wymagany Python 3.10+.
 |---|---|
 | `main.py` | punkt wejścia |
 | `app.py` | okno główne: powłoka, respy, snajper, logowanie |
+| `theme.py` | wygląd w jednym miejscu: kolory, czcionki, skala odstępów (4/8/12/16/24), ikony wektorowe, arkusz stylów, wspólne elementy (przyciski, stany puste, okna komunikatów). Inne pliki nie wpisują kolorów na sztywno. |
 | `settings_ui.py` | okno ustawień |
 | `api.py`, `parser.py` | zapytania do tibialoot.com i parsowanie tablicy |
 | `slots.py` | wolne okna i walidacja terminów |
 | `sniper.py` | snajp i obserwacja |
+| `imbu.py`, `imbu_data.py` | kalkulator imbuementów (strona) i dane materiałów / opłat |
+| `imbu_icons.py`, `tools/fetch_imbu_icons.py` | ikonki imbuementów i materiałów: `assets/imbu/` → cache → pobranie w tle; skrypt dołącza je do wydania |
 | `today.py` | sekcja „Dziś”: boosted (TibiaData API), Rashid i mapka |
 | `assets/maps/`, `tools/make_rashid_maps.py` | wycinki mapy przy Rashidzie (tibiamaps.io) i skrypt do ich odtworzenia |
 | `sounds.py` | dźwięki i głośność |

@@ -59,7 +59,7 @@ def fit_sprite(pm: QPixmap, size: int, scale: int = 1) -> QPixmap:
     return out
 SERVER_SAVE_HOUR = 10          # czas serwera (CET/CEST)
 
-C_TEXT, C_MUTED, C_ACCENT, C_PANEL, C_BORDER = "#e7e7ea", "#8b8f98", "#f97316", "#17181b", "#2a2c31"
+import theme as T
 
 # Rashid – stały grafik tygodniowy (zmienia miasto o server save)
 RASHID = {   # miasto, miejsce, (x, y) depo z danych mapy tibiamaps – tawerna Rashida jest tuż obok
@@ -152,17 +152,17 @@ X0, X1, Y0, Y1 = 31980, 33780, 31000, 33060
 
 def draw_map(city: str, w=300, h=300) -> QPixmap:
     pm = QPixmap(w, h)
-    pm.fill(QColor("#0d1b2a"))
+    pm.fill(QColor(T.MAP_SEA))
     p = QPainter(pm)
     p.setRenderHint(QPainter.Antialiasing)
 
     def pt(x, y):
         return QPointF((x - X0) / (X1 - X0) * w, (y - Y0) / (Y1 - Y0) * h)
 
-    pen = QPen(QColor("#26372a"), 14)          # gruba obwódka w kolorze lądu = zaokrąglone brzegi
+    pen = QPen(QColor(T.MAP_LAND), 14)          # gruba obwódka w kolorze lądu = zaokrąglone brzegi
     pen.setJoinStyle(Qt.RoundJoin)
     p.setPen(pen)
-    p.setBrush(QColor("#26372a"))
+    p.setBrush(QColor(T.MAP_LAND))
     for poly in LANDS:
         path = QPainterPath(pt(*poly[0]))
         for q in poly[1:]:
@@ -180,14 +180,16 @@ def draw_map(city: str, w=300, h=300) -> QPixmap:
         if on:
             for r, a in ((16, 50), (11, 90)):
                 p.setPen(Qt.NoPen)
-                p.setBrush(QColor(249, 115, 22, a))
+                c_ = QColor(T.ACCENT)
+                c_.setAlpha(a)
+                p.setBrush(c_)
                 p.drawEllipse(c, r, r)
-        p.setPen(QPen(QColor("#0d1b2a"), 1))
-        p.setBrush(QColor(C_ACCENT) if on else QColor("#e7e7ea" if is_rashid else "#7b8290"))
+        p.setPen(QPen(QColor(T.MAP_SEA), 1))
+        p.setBrush(QColor(T.ACCENT) if on else QColor(T.MAP_TOWN_RASHID if is_rashid else T.MAP_TOWN))
         rad = 5.5 if on else (3.2 if is_rashid else 2.4)
         p.drawEllipse(c, rad, rad)
         if on or is_rashid:
-            p.setPen(QColor(C_TEXT if on else "#aab0bb"))
+            p.setPen(QColor(T.TEXT if on else T.MAP_LABEL))
             fb = QFont(f)
             fb.setBold(on)
             fb.setPointSizeF(9 if on else 7.5)
@@ -196,7 +198,7 @@ def draw_map(city: str, w=300, h=300) -> QPixmap:
             rect = QRectF(c.x() - 110 if left else c.x() + 8, c.y() - 9, 102, 18)
             p.drawText(rect, (Qt.AlignRight if left else Qt.AlignLeft) | Qt.AlignVCenter, name)
             p.setFont(f)
-    p.setPen(QColor("#55606e"))
+    p.setPen(QColor(T.MAP_NOTE))
     p.drawText(QRectF(0, h - 16, w - 6, 14), Qt.AlignRight, "mapa poglądowa")
     p.end()
     return pm
@@ -241,17 +243,17 @@ def merchant_icon(size=44) -> QPixmap:
     bag.cubicTo(s * .10, s * .45, s * .12, s * .92, s * .50, s * .92)
     bag.cubicTo(s * .88, s * .92, s * .90, s * .45, s * .64, s * .30)
     bag.closeSubpath()
-    p.setPen(QPen(QColor("#5b3a1e"), 2))
-    p.setBrush(QColor("#a86b32"))
+    p.setPen(QPen(QColor(T.BAG["edge"]), 2))
+    p.setBrush(QColor(T.BAG["body"]))
     p.drawPath(bag)
-    p.setBrush(QColor("#c88a4a"))
+    p.setBrush(QColor(T.BAG["rim"]))
     p.drawEllipse(QPointF(s * .50, s * .24), s * .17, s * .09)          # wywinięty brzeg
-    p.setPen(QPen(QColor("#e0b04a"), 2.5))
+    p.setPen(QPen(QColor(T.BAG["cord"]), 2.5))
     p.drawLine(QPointF(s * .36, s * .33), QPointF(s * .64, s * .33))     # sznurek
-    p.setPen(QPen(QColor("#8a6512"), 1.5))
-    p.setBrush(QColor("#f5c542"))
+    p.setPen(QPen(QColor(T.BAG["coin_edge"]), 1.5))
+    p.setBrush(QColor(T.BAG["coin"]))
     p.drawEllipse(QPointF(s * .62, s * .68), s * .15, s * .15)          # moneta
-    p.setPen(QPen(QColor("#b8860b"), 1.5))
+    p.setPen(QPen(QColor(T.BAG["coin_ring"]), 1.5))
     p.drawEllipse(QPointF(s * .62, s * .68), s * .09, s * .09)
     p.end()
     return pm
@@ -266,17 +268,14 @@ class HoverCard(QFrame):
         super().__init__(None)
         self.setObjectName("hoverCard")
         self.setAttribute(Qt.WA_TransparentForMouseEvents)
-        self.setStyleSheet(f"QFrame#hoverCard {{ background:{C_PANEL}; border:1px solid #3a3d44; border-radius:10px; }}"
-                           "QLabel { background: transparent; }")
-        v = QVBoxLayout(self)
-        v.setContentsMargins(12, 10, 12, 12)
-        v.setSpacing(4)
-        self.title = QLabel()
-        self.title.setStyleSheet(f"color:{C_TEXT}; font-size:15px; font-weight:800;")
+        self.setStyleSheet(f"QFrame#hoverCard {{ background:{T.SURFACE_2}; border:1px solid {T.LINE_2}; "
+                           f"border-radius:{T.RADIUS_L}px; }}")
+        v = T.vbox(self, (T.S3, T.S3, T.S3, T.S3), T.S1)
+        self.title = T.label("", "title")
         v.addWidget(self.title)
-        self.sub = QLabel()
-        self.sub.setStyleSheet(f"color:{C_MUTED};")
+        self.sub = T.label("", "muted")
         v.addWidget(self.sub)
+        v.addSpacing(T.S1)
         self.img = QLabel()
         self.img.setAlignment(Qt.AlignCenter)
         v.addWidget(self.img)
@@ -296,8 +295,8 @@ class HoverCard(QFrame):
             self.img.clear()
             self.img.hide()
         self.adjustSize()
-        pos = anchor.mapTo(host, QPoint(anchor.width() + 12, -6))
-        pos.setY(max(6, min(pos.y(), host.height() - self.height() - 6)))
+        pos = anchor.mapTo(host, QPoint(anchor.width() + T.S3, 0))
+        pos.setY(max(T.S2, min(pos.y(), host.height() - self.height() - T.S2)))
         self.move(pos)
         self.raise_()
         self.show()
@@ -349,7 +348,7 @@ class TodayWidget(QWidget):
 
         h = QBoxLayout(QBoxLayout.LeftToRight, self)
         h.setContentsMargins(0, 0, 0, 0)
-        h.setSpacing(6)
+        h.setSpacing(T.S2)
         self._box = h
         self.t_creature = Tile(lambda t: self._hover("creature", t), self.card.schedule_hide)
         self.t_boss = Tile(lambda t: self._hover("boss", t), self.card.schedule_hide)
@@ -363,7 +362,8 @@ class TodayWidget(QWidget):
             h.addWidget(t)
         h.addStretch(1)
         for t in (self.t_creature, self.t_boss):
-            t.setText("…")
+            t.setPixmap(T.pixmap("clock", T.TEXT_3, 20))
+            t.setToolTip("Pobieram…")
 
         self._load_cache()
         self.timer = QTimer(self)
@@ -438,13 +438,15 @@ class TodayWidget(QWidget):
         if pm.loadFromData(data):
             self.pix[key] = fit_sprite(pm, 128, CARD_SCALE)
             tile.setPixmap(fit_sprite(pm, TILE - 4))
+            tile.setToolTip("")
 
     def _err(self, msg):
         self._loading = False
         self._retry_at = datetime.now() + timedelta(minutes=10)
         if not self.data:
             for t in (self.t_creature, self.t_boss):
-                t.setText("?")
+                t.setPixmap(T.pixmap("help", T.TEXT_3, 20))
+                t.setToolTip("Nie udało się pobrać – spróbuję za 10 min")
         self.log(f"⚠ Nie udało się pobrać boosted ({msg}) – spróbuję za 10 min.")
 
     # --- najechanie

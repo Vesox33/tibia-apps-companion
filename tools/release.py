@@ -48,8 +48,9 @@ def changelog_notes(ver: str) -> str:
     f = ROOT / "CHANGELOG.md"
     if not f.exists():
         return ""
-    m = re.search(rf"^## \[?{re.escape(ver)}\]?.*?$(.*?)(?=^## |\Z)", f.read_text(encoding="utf-8"), re.M | re.S)
-    return m.group(1).strip() if m else ""
+    # spacje na początku linijek (np. po wklejeniu) nie przeszkadzają
+    m = re.search(rf"^[ \t]*## \[?{re.escape(ver)}\]?.*?$(.*?)(?=^[ \t]*## |\Z)", f.read_text(encoding="utf-8"), re.M | re.S)
+    return "\n".join(l.strip() for l in m.group(1).strip().splitlines()) if m else ""
 
 
 def vtuple(v):
