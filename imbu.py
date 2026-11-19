@@ -18,9 +18,12 @@ from imbu_icons import SIZE, IconStore
 
 import theme as T
 
+IMB_ICON = 64                          # ikonki imbuementów – natywny rozmiar grafik
+IMB_CARD_H = IMB_ICON + 2 * T.S2
+
 CSS = f"""
 QPushButton#imbCard {{ background: {T.SURFACE}; border: none; border-radius: {T.RADIUS_L}px; text-align: left;
-                       padding: 0; min-height: 64px; max-height: 64px; }}
+                       padding: 0; min-height: {IMB_CARD_H}px; max-height: {IMB_CARD_H}px; }}
 QPushButton#imbCard:hover {{ background: {T.SURFACE_2}; }}
 QPushButton#imbCard:checked {{ background: {T.SURFACE_3}; }}
 QLabel#count {{ background: {T.SURFACE_2}; border-radius: {T.RADIUS}px; font-weight: {T.W_SEMI};
@@ -74,6 +77,25 @@ def card(layout_cls=QVBoxLayout, margins=(T.S4, T.S4, T.S4, T.S4), spacing=T.S3)
     return f, lay
 
 
+def rounded(pm, radius: int = T.RADIUS):
+    """Zaokrąglone rogi ikonki – pasują do kart aplikacji."""
+    from PySide6.QtGui import QPainter, QPainterPath, QPixmap
+    if pm.isNull():
+        return pm
+    out = QPixmap(pm.size())
+    out.setDevicePixelRatio(pm.devicePixelRatio())
+    out.fill(Qt.transparent)
+    p = QPainter(out)
+    p.setRenderHint(QPainter.Antialiasing)
+    w, h = pm.width() / pm.devicePixelRatio(), pm.height() / pm.devicePixelRatio()
+    path = QPainterPath()
+    path.addRoundedRect(0, 0, w, h, radius, radius)
+    p.setClipPath(path)
+    p.drawPixmap(0, 0, pm)
+    p.end()
+    return out
+
+
 class ImbCard(QPushButton):
     """Kafelek wyboru imbuementu: ikonka, nazwa, opis."""
 
@@ -82,18 +104,20 @@ class ImbCard(QPushButton):
         self.setObjectName("imbCard")
         self.setCheckable(True)
         self.setCursor(Qt.PointingHandCursor)
-        self.setMinimumHeight(64)
+        self.setMinimumHeight(IMB_CARD_H)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        h = T.hbox(self, (T.S3, T.S3, T.S4, T.S3), T.S3)
+        h = T.hbox(self, (T.S2, T.S2, T.S4, T.S2), T.S3)
         self.icon = QLabel()
-        self.icon.setFixedSize(SIZE + T.S2, SIZE + T.S2)
+        self.icon.setFixedSize(IMB_ICON, IMB_ICON)
         self.icon.setAlignment(Qt.AlignCenter)
         h.addWidget(self.icon)
         v = T.vbox(spacing=0)
         self.name = T.label(name, "strong")
         self.desc = T.label(desc, "hint")
+        v.addStretch(1)                      # nazwa i opis razem, na środku wysokości ikonki
         v.addWidget(self.name)
         v.addWidget(self.desc)
+        v.addStretch(1)
         h.addLayout(v, 1)
         for w in (self.icon, self.name, self.desc):
             w.setAttribute(Qt.WA_TransparentForMouseEvents)
@@ -148,7 +172,7 @@ class ImbuPage(QWidget):
         self.cards: dict[str, ImbCard] = {}
         for name, (desc, _g) in IMBUEMENTS.items():
             c = ImbCard(name, desc)
-            c.icon.setPixmap(self.icons.get("imb", name))
+            c.icon.setPixmap(rounded(self.icons.get("imb", name, IMB_ICON)))
             c.clicked.connect(lambda _=False, n=name: self._pick(n))
             self.imb_group.addButton(c)
             self.cards_box.addWidget(c)
@@ -315,7 +339,7 @@ class ImbuPage(QWidget):
 
     def _icon_ready(self, kind, name):
         if kind == "imb" and name in self.cards:
-            self.cards[name].icon.setPixmap(self.icons.get("imb", name))
+            self.cards[name].icon.setPixmap(rounded(self.icons.get("imb", name, IMB_ICON)))
         elif kind == "item" and name in self.item_icons:
             self.item_icons[name].setPixmap(self.icons.get("item", name))
 

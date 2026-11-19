@@ -11,10 +11,10 @@ from datetime import datetime, timedelta, date
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from PySide6.QtCore import (QEvent, QDate, QDateTime, QObject, QRect, QRunnable, QSize, Qt,
+from PySide6.QtCore import (QEvent, QDate, QDateTime, QObject, QRect, QRectF, QRunnable, QSize, Qt,
                             QThreadPool, QTime, QTimer, QUrl, Signal, QStandardPaths)
 from PySide6.QtNetwork import QNetworkCookie
-from PySide6.QtGui import QAction, QBrush, QColor, QFont, QIcon, QPainter, QPen, QPixmap
+from PySide6.QtGui import QAction, QBrush, QColor, QFont, QIcon, QKeySequence, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (QApplication, QButtonGroup, QDateEdit, QDateTimeEdit, QDialog,
                                QDialogButtonBox, QFrame, QHBoxLayout, QInputDialog, QLabel,
                                QLineEdit, QListWidget, QListWidgetItem, QMainWindow,
@@ -471,45 +471,262 @@ class Timeline(QWidget):
 
 
 # ---------------------------------------------------------------- pole godziny
-class TimeField(QLineEdit):
-    """Godzina HH:MM: wpisz i Enter, kółko myszy ±5 min (z Shift ±1 h), strzałki ↑↓ ±5 min, PgUp/PgDn ±1 h."""
-    committed = Signal(object)   # QTime
-    stepped = Signal(int)        # przesunięcie w minutach
+class TimeField(QWidget):
+    """Pole godziny z dwiema częściami: godziny | minuty.
+
+    Wpisywanie: same cyfry, bez dwukropka – „1430”, „930”, „9” → 09:00. Po dwóch cyfrach godziny kursor sam
+    przechodzi na minuty; po minutach wartość od razu się zatwierdza (Enter niepotrzebny).
+    „:”, „.”, spacja, → / Tab – do minut, ← – do godzin, Backspace – wpisz część od nowa, Esc – cofnij.
+    Kółko myszy: nad godziną ±1 h, nad minutami ±5 min (Shift: zawsze ±1 h). Strzałki ↑↓ – to samo dla
+    zaznaczonej części. Wklejanie (Ctrl+V) rozumie m.in. „14:30”, „14.30”, „1430”.
+    """
+    committed = Signal(object)   # QTime – zatwierdzona godzina
+    stepped = Signal(int)        # prośba o przesunięcie (minuty) – zmianę robi właściciel pola
+    textChanged = Signal(str)    # „HH:mm” po każdej zmianie wartości
 
     def __init__(self):
         super().__init__()
-        self.setInputMask("99:99")
-        self.setObjectName("time")
-        self.setFixedWidth(T.S6 * 3)
-        self.setAlignment(Qt.AlignCenter)
-        self.setToolTip("Wpisz godzinę i Enter • kółko myszy: ±5 min (Shift: ±1 h) • strzałki ↑↓")
-        self.editingFinished.connect(self._commit)
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setAttribute(Qt.WA_Hover)
+        self.setMouseTracking(True)
+        self.setCursor(Qt.IBeamCursor)
+        self.setFixedSize(T.S6 * 3, T.CONTROL_H)
+        self.setToolTip("Wpisz cyfry, np. 1430 albo 930 – zatwierdza się samo\n"
+                        "Kółko myszy: nad godziną ±1 h, nad minutami ±5 min\n"
+                        "Strzałki ↑↓ zmieniają zaznaczoną część")
+        self._t = QTime(0, 0)          # zatwierdzona wartość
+        self._seg = 0                  # 0 – godziny, 1 – minuty
+        self._buf = ""                 # cyfry wpisywanej części
+        self._ph = None                # wpisana godzina (jeszcze niezatwierdzona)
+        self._pm = None                # wpisane minuty
+        self._hover = -1
 
+    # --- API (jak dawniej w polu tekstowym)
     def set_time(self, t: QTime):
-        self.blockSignals(True)
-        self.setText(t.toString("HH:mm"))
-        self.blockSignals(False)
+        self._t = QTime(t.hour(), t.minute())
+        self._reset_edit()
+        self.update()
 
-    def _commit(self):
-        t = QTime.fromString(self.text(), "HH:mm")
-        if t.isValid():
-            self.committed.emit(t)
+    def time(self) -> QTime:
+        return QTime(self._t)
+
+    def text(self) -> str:
+        return self._t.toString("HH:mm")
+
+    # --- edycja
+    def _editing(self) -> bool:
+        return bool(self._buf) or self._ph is not None or self._pm is not None
+
+    def _reset_edit(self):
+        self._buf, self._ph, self._pm = "", None, None
+
+    def _finish(self):
+        """Zatwierdza to, co wpisano: brakujące minuty po wpisaniu godziny = :00, jedna cyfra minut = dziesiątki."""
+        if not self._editing():
+            return
+        h = self._ph if self._ph is not None else self._t.hour()
+        if self._seg == 0 and self._buf:
+            h = int(self._buf)
+        if self._pm is not None:
+            m = self._pm
+        elif self._seg == 1 and self._buf:
+            m = min(int(self._buf) * 10, 50)
+        elif self._ph is not None or (self._seg == 0 and self._buf):
+            m = 0
         else:
-            self.committed.emit(None)   # przywróci poprzednią wartość
+            m = self._t.minute()
+        self._reset_edit()
+        self._t = QTime(min(h, 23), min(m, 59))
+        self.update()
+        self.textChanged.emit(self.text())
+        self.committed.emit(QTime(self._t))
 
-    def wheelEvent(self, ev):
-        step = 60 if ev.modifiers() & Qt.ShiftModifier else 5
-        self.stepped.emit(step if ev.angleDelta().y() > 0 else -step)
-        ev.accept()
+    def _digit(self, d: int):
+        if self._seg == 0:
+            if not self._buf:
+                if d > 2:                      # 3–9 → 03–09, od razu minuty
+                    self._ph, self._seg = d, 1
+                else:
+                    self._buf = str(d)
+            else:
+                self._ph = min(int(self._buf + str(d)), 23)
+                self._buf, self._seg = "", 1
+        else:
+            if not self._buf:
+                if d > 5:                      # 6–9 → :06–:09
+                    self._pm = d
+                    self._finish()
+                    return
+                self._buf = str(d)
+            else:
+                self._pm = int(self._buf + str(d))
+                self._buf = ""
+                self._finish()
+                return
+        self.update()
+
+    def _paste(self, text: str):
+        import re
+        m = re.match(r"^\s*(\d{1,2})\s*[:.,h ]?\s*(\d{2})?\s*$", text or "")
+        if not m:
+            return
+        h, mm = int(m.group(1)), int(m.group(2) or 0)
+        if h <= 23 and mm <= 59:
+            self._reset_edit()
+            self._ph, self._pm = h, mm
+            self._finish()
+
+    def _step(self, mins: int):
+        self._reset_edit()
+        self.stepped.emit(mins)
+        self.update()
+
+    def _seg_at(self, x: float) -> int:
+        return 0 if x < self.width() / 2 else 1
+
+    # --- zdarzenia
+    def event(self, ev):
+        # Tab z godzin przechodzi do minut, Shift+Tab z minut – do godzin; dalej normalnie
+        if ev.type() == QEvent.KeyPress and ev.key() in (Qt.Key_Tab, Qt.Key_Backtab):
+            back = ev.key() == Qt.Key_Backtab or bool(ev.modifiers() & Qt.ShiftModifier)
+            if not back and self._seg == 0:
+                self._seg, self._buf = 1, ""
+                self.update()
+                return True
+            if back and self._seg == 1:
+                self._seg, self._buf = 0, ""
+                self.update()
+                return True
+            self._finish()
+        return super().event(ev)
 
     def keyPressEvent(self, ev):
-        k = ev.key()
-        if k in (Qt.Key_Up, Qt.Key_Down):
-            self.stepped.emit(5 if k == Qt.Key_Up else -5)
+        k, txt = ev.key(), ev.text()
+        if ev.matches(QKeySequence.Paste):
+            self._paste(QApplication.clipboard().text())
+        elif txt and txt.isdigit():
+            self._digit(int(txt))
+        elif k in (Qt.Key_Up, Qt.Key_Down):
+            step = 60 if self._seg == 0 else 5
+            self._step(step if k == Qt.Key_Up else -step)
         elif k in (Qt.Key_PageUp, Qt.Key_PageDown):
-            self.stepped.emit(60 if k == Qt.Key_PageUp else -60)
+            self._step(60 if k == Qt.Key_PageUp else -60)
+        elif k == Qt.Key_Right or txt in (":", ".", ",", " ", "h"):
+            if self._seg == 0 and self._buf:
+                self._ph = int(self._buf)
+            self._seg, self._buf = 1, ""
+            self.update()
+        elif k == Qt.Key_Left:
+            self._seg, self._buf = 0, ""
+            self.update()
+        elif k in (Qt.Key_Backspace, Qt.Key_Delete):
+            self._buf = ""
+            if self._seg == 1:
+                self._pm = None
+            else:
+                self._ph = None
+            self.update()
+        elif k in (Qt.Key_Return, Qt.Key_Enter):
+            self._finish()
+        elif k == Qt.Key_Escape and self._editing():
+            self._reset_edit()
+            self.update()
         else:
             super().keyPressEvent(ev)
+
+    def mousePressEvent(self, ev):
+        if self._editing():
+            self._finish()
+        self._seg = self._seg_at(ev.position().x())
+        self.setFocus(Qt.MouseFocusReason)
+        self.update()
+
+    def mouseMoveEvent(self, ev):
+        s = self._seg_at(ev.position().x())
+        if s != self._hover:
+            self._hover = s
+            self.update()
+
+    def leaveEvent(self, ev):
+        self._hover = -1
+        self.update()
+        super().leaveEvent(ev)
+
+    def wheelEvent(self, ev):
+        if not self.isEnabled():
+            return
+        on_hour = self._seg_at(ev.position().x()) == 0 or bool(ev.modifiers() & Qt.ShiftModifier)
+        step = 60 if on_hour else 5
+        dy = ev.angleDelta().y() or ev.angleDelta().x()
+        if dy:
+            self._step(step if dy > 0 else -step)
+        ev.accept()
+
+    def focusInEvent(self, ev):
+        if ev.reason() == Qt.TabFocusReason:
+            self._seg = 0
+        elif ev.reason() == Qt.BacktabFocusReason:
+            self._seg = 1
+        self.update()
+        super().focusInEvent(ev)
+
+    def focusOutEvent(self, ev):
+        self._finish()
+        self.update()
+        super().focusOutEvent(ev)
+
+    def changeEvent(self, ev):
+        if ev.type() == QEvent.EnabledChange:
+            self.setCursor(Qt.IBeamCursor if self.isEnabled() else Qt.ArrowCursor)
+        super().changeEvent(ev)
+
+    def sizeHint(self):
+        return QSize(T.S6 * 3, T.CONTROL_H)
+
+    def paintEvent(self, _):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        r = QRectF(self.rect()).adjusted(0.5, 0.5, -0.5, -0.5)
+        on, focus = self.isEnabled(), self.hasFocus()
+        p.setPen(QPen(QColor(T.TEXT_3 if focus else (T.LINE_2 if self.underMouse() and on else T.SURFACE_2)), 1))
+        p.setBrush(QColor(T.SURFACE_2 if on else T.SURFACE))
+        p.drawRoundedRect(r, T.RADIUS, T.RADIUS)
+
+        h_txt = (self._buf + "–" if (self._seg == 0 and self._buf) else
+                 f"{self._ph:02d}" if self._ph is not None else f"{self._t.hour():02d}")
+        if self._seg == 1 and self._buf:
+            m_txt = self._buf + "–"
+        elif self._pm is not None:
+            m_txt = f"{self._pm:02d}"
+        elif self._ph is not None:
+            m_txt = "––"                        # godzina wpisana, minuty jeszcze nie
+        else:
+            m_txt = f"{self._t.minute():02d}"
+        f = QFont(self.font())
+        f.setPixelSize(T.FS_TITLE)
+        f.setWeight(QFont.DemiBold)
+        p.setFont(f)
+        fm = p.fontMetrics()
+        seg_w = fm.horizontalAdvance("00") + T.S2
+        col_w = fm.horizontalAdvance(":") + T.S1
+        x0 = (self.width() - (2 * seg_w + col_w)) / 2
+        boxes = (QRectF(x0, 4, seg_w, self.height() - 8), QRectF(x0 + seg_w + col_w, 4, seg_w, self.height() - 8))
+        # zaznaczona część (przy fokusie) albo część pod kursorem (podpowiedź, co zmieni kółko)
+        for i, b in enumerate(boxes):
+            if on and focus and i == self._seg:
+                p.setPen(Qt.NoPen)
+                p.setBrush(QColor(T.LINE_2))
+                p.drawRoundedRect(b, 5, 5)
+            elif on and not focus and i == self._hover:
+                p.setPen(Qt.NoPen)
+                p.setBrush(QColor(T.SURFACE_3))
+                p.drawRoundedRect(b, 5, 5)
+        p.setPen(QColor(T.TEXT if on else T.TEXT_3))
+        p.drawText(boxes[0], Qt.AlignCenter, h_txt)
+        p.drawText(boxes[1], Qt.AlignCenter, m_txt)
+        p.setPen(QColor(T.TEXT_2 if on else T.TEXT_3))
+        p.drawText(QRectF(x0 + seg_w, 0, col_w, self.height() - 1), Qt.AlignCenter, ":")
+        p.end()
 
 
 # ---------------------------------------------------------------- wspólne elementy wyglądu
@@ -990,7 +1207,7 @@ class MainWindow(QMainWindow):
         self.shift_btns = []
         for mins, lbl in ((-60, "−1 h"), (-15, "−15")):
             b = T.button(lbl, kind="step")
-            b.setFixedWidth(T.S6 + T.S4)
+            b.setFixedWidth(T.S6 + T.S3)
             b.setAutoRepeat(True)
             b.clicked.connect(lambda _=False, m=mins: self._shift_start(m))
             r1.addWidget(b)
@@ -1001,7 +1218,7 @@ class MainWindow(QMainWindow):
         r1.addWidget(self.start_time)
         for mins, lbl in ((15, "+15"), (60, "+1 h")):
             b = T.button(lbl, kind="step")
-            b.setFixedWidth(T.S6 + T.S4)
+            b.setFixedWidth(T.S6 + T.S3)
             b.setAutoRepeat(True)
             b.clicked.connect(lambda _=False, m=mins: self._shift_start(m))
             r1.addWidget(b)
@@ -1919,7 +2136,11 @@ class MainWindow(QMainWindow):
             self._apply()
             return
         d = self.sel_start.date()
-        self._apply(start=datetime(d.year, d.month, d.day, t.hour(), t.minute()))
+        start = datetime(d.year, d.month, d.day, t.hour(), t.minute())
+        now = now_server()
+        if start < now - timedelta(minutes=1) and start + timedelta(days=1) <= start_limit(now):
+            start += timedelta(days=1)       # godzina dziś już minęła → ta sama godzina jutro
+        self._apply(start=start)
 
     def _len_slider_changed(self, v: int):
         if self._applying:

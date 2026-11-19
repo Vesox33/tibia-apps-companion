@@ -365,6 +365,7 @@ class TodayWidget(QWidget):
             t.setPixmap(T.pixmap("clock", T.TEXT_3, 20))
             t.setToolTip("Pobieram…")
 
+        self._stale = False
         self._load_cache()
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.tick)
@@ -395,14 +396,41 @@ class TodayWidget(QWidget):
             return
         self.data = d
         self.day_loaded = d.get("day")
+        self._stale = self._is_stale(d)
         for key in ("creature", "boss"):
             url = (d.get(key) or {}).get("image")
             if url and self._img_path(url).exists():
                 self._got_image(key, self._img_path(url).read_bytes())
 
+    # Po server save TibiaData przez kilka–kilkanaście minut może oddawać jeszcze wczorajsze boosted.
+    # Takie dane nie mogą „zamknąć” dnia – sprawdzamy ponownie, aż się zmienią.
+    FRESH_AFTER = timedelta(minutes=15)      # dane pobrane wcześniej po server save traktujemy jako niepewne
+    STALE_GIVE_UP = timedelta(hours=3)       # tyle po server save przestajemy czekać na zmianę
+
+    def _ss(self, day: str) -> datetime:
+        return datetime.strptime(day, "%Y-%m-%d") + timedelta(hours=SERVER_SAVE_HOUR)
+
+    def _is_stale(self, d: dict) -> bool:
+        """True, gdy zapisane „dzisiejsze” dane mogą być jeszcze wczorajsze."""
+        if not d.get("day"):
+            return True
+        if not d.get("fetched_at"):
+            return True                       # zapis ze starszej wersji – sprawdź raz jeszcze
+        fetched = datetime.fromisoformat(d["fetched_at"])
+        ss = self._ss(d["day"])
+        if fetched - ss >= self.STALE_GIVE_UP:
+            return False
+        prev = d.get("prev") or {}
+        if prev.get("creature"):
+            # znamy wczorajsze – dane są świeże, gdy różnią się od nich
+            return (prev.get("creature") == (d.get("creature") or {}).get("name")
+                    and prev.get("boss") == (d.get("boss") or {}).get("name"))
+        return fetched < ss + self.FRESH_AFTER      # nie znamy wczorajszych – ufamy dopiero po kwadransie
+
     def tick(self):
         today = game_day(self.now_fn()).strftime("%Y-%m-%d")
-        if self.day_loaded == today or self._loading or datetime.now() < self._retry_at:
+        fresh = self.day_loaded == today and not self._stale
+        if fresh or self._loading or datetime.now() < self._retry_at:
             return
         self._loading = True
         day = today
@@ -411,6 +439,7 @@ class TodayWidget(QWidget):
             try:
                 d = fetch_boosted()
                 d["day"] = day
+                d["fetched_at"] = self.now_fn().strftime("%Y-%m-%dT%H:%M:%S")
                 self.bridge.data.emit(d)
                 for k in ("creature", "boss"):
                     if d[k].get("image"):
@@ -422,8 +451,16 @@ class TodayWidget(QWidget):
     def _got(self, d):
         self._loading = False
         old = self.data
+        # „wczoraj” do porównania: dane z poprzedniego dnia albo zapamiętane przy wcześniejszym pobraniu dziś
+        if old.get("day") and old.get("day") != d["day"]:
+            d["prev"] = {"creature": (old.get("creature") or {}).get("name"), "boss": (old.get("boss") or {}).get("name")}
+        elif old.get("prev"):
+            d["prev"] = old["prev"]
         self.data = d
         self.day_loaded = d["day"]
+        self._stale = self._is_stale(d)
+        if self._stale:
+            self._retry_at = datetime.now() + timedelta(minutes=5)
         try:
             self.cache.mkdir(parents=True, exist_ok=True)
             self._cache_file().write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")

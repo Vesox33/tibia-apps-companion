@@ -12,15 +12,14 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from imbu_data import IMBUEMENTS  # noqa: E402
-from imbu_icons import BUNDLED, download, file_name  # noqa: E402
+from imbu_icons import BUNDLED, download, local_path  # noqa: E402
 
 
 def main():
     jobs = [("imb", n) for n in IMBUEMENTS] + sorted({("item", i) for _d, g in IMBUEMENTS.values() for i, _n in g})
     ok, bad = 0, []
     for kind, name in jobs:
-        sub = "imbuements" if kind == "imb" else "items"
-        if (BUNDLED / sub / file_name(name)).exists():
+        if local_path(kind, name) is not None and str(BUNDLED) in str(local_path(kind, name)):
             ok += 1
             continue
         try:

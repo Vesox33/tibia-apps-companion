@@ -62,8 +62,18 @@ def bump(v: str) -> str:
     return f"{parts[0]}.{parts[1]}.{parts[2] + 1}"
 
 
+def remote_url(repo: str) -> str:
+    return f"https://github.com/{repo}.git"
+
+
+def git_out(*args) -> str:
+    r = run(["git", *args], check=False, capture=True)
+    return r.stdout.strip() if r.returncode == 0 else ""
+
+
 def ensure_repo() -> str:
-    """Repozytorium na GitHubie – przy pierwszym wydaniu zakłada je (publiczne)."""
+    """Repozytorium na GitHubie – przy pierwszym wydaniu zakłada je (publiczne).
+    Działa też w świeżo rozpakowanym folderze bez .git: podpina go do istniejącego repozytorium."""
     _, repo = read_version_file()
     if not (ROOT / ".git").exists():
         run(["git", "init", "-b", "main"])
@@ -81,7 +91,42 @@ def ensure_repo() -> str:
         r = run(["gh", "repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner"], capture=True)
         repo = r.stdout.strip()
     write_version_file(repo=repo)
+    sync_with_remote(repo)
     return repo
+
+
+def sync_with_remote(repo: str):
+    """Ustawia lokalną historię na stan z GitHuba, nie ruszając plików w folderze.
+    Dzięki temu wydanie zadziała po wgraniu nowych plików na stary folder albo do nowego,
+    a commit wydania zawiera dokładnie różnicę względem GitHuba."""
+    if not git_out("remote"):
+        run(["git", "remote", "add", "origin", remote_url(repo)])
+    run(["git", "fetch", "origin", "--tags", "--force"])
+    if not git_out("rev-parse", "--verify", "--quiet", "origin/main"):
+        return
+    run(["git", "reset", "-q", "origin/main"])          # bez --hard: pliki w folderze zostają
+    # lista spawnów jest publikowana osobno (wydaj_spawny) – zawsze bierzemy tę z GitHuba
+    if git_out("ls-tree", "--name-only", "origin/main", "huntuploader/data/spawns.json"):
+        run(["git", "checkout", "origin/main", "--", "huntuploader/data/spawns.json"])
+    # grafiki, których brakuje w folderze (np. pobrane wcześniej ikonki), przywracamy z GitHuba zamiast je usuwać
+    missing = [p for p in git_out("ls-files", "--deleted", "--", "assets").splitlines() if p]
+    if missing:
+        run(["git", "checkout", "origin/main", "--", *missing])
+
+
+def released_version() -> str:
+    """Najwyższa wydana wersja (tagi v* z GitHuba) albo pusty napis."""
+    tags = [t.lstrip("v") for t in git_out("tag", "-l", "v*").split()]
+    return max(tags, key=vtuple) if tags else ""
+
+
+def changelog_top() -> str:
+    """Najnowsza wersja opisana w CHANGELOG.md."""
+    f = ROOT / "CHANGELOG.md"
+    if not f.exists():
+        return ""
+    m = re.search(r"^[ \t]*## \[?(\d+(?:\.\d+)+)\]?", f.read_text(encoding="utf-8"), re.M)
+    return m.group(1) if m else ""
 
 
 def build():
@@ -115,11 +160,19 @@ def main():
 
     repo = ensure_repo()
     cur, _ = read_version_file()
-    first = not run(["git", "tag", "-l", "v*"], capture=True).stdout.strip()
-    sug = cur if first else bump(cur)
-    ver = input(f"\nObecna wersja: {cur}{' (jeszcze nie wydana)' if first else ''}\nWersja do wydania [{sug}]: ").strip() or sug
-    if vtuple(ver) < vtuple(cur) or (not first and vtuple(ver) == vtuple(cur)):
-        sys.exit("Nowa wersja musi być wyższa od ostatnio wydanej.")
+    last = released_version()
+    first = not last
+    top = changelog_top()
+    if first:
+        sug = cur
+    elif top and vtuple(top) > vtuple(last):
+        sug = top
+    else:
+        sug = bump(last)
+    print(f"\nOstatnie wydanie: {last or 'brak'}")
+    ver = input(f"Wersja do wydania [{sug}] (Enter = {sug}): ").strip() or sug
+    if not first and vtuple(ver) <= vtuple(last):
+        sys.exit(f"Nowa wersja musi być wyższa od ostatnio wydanej ({last}).")
     if changelog_notes(ver):
         print(f"Opis wydania z CHANGELOG.md:\n{changelog_notes(ver)}\n")
     else:

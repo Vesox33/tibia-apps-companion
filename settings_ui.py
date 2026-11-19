@@ -232,7 +232,7 @@ class SettingsDialog(QDialog):
         lay.addWidget(g)
 
         g, v = group("Analizatory")
-        self.chk_listen = QCheckBox("Przechwytuj „Copy to clipboard” z gry (nasłuch schowka)")
+        self.chk_listen = QCheckBox("Nasłuchuj schowka (analizatory huntów)")
         self.chk_listen.setChecked(s.clipboard_listen)
         v.addWidget(self.chk_listen)
         lay.addWidget(g)

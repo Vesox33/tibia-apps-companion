@@ -282,7 +282,6 @@ QLineEdit:hover, QSpinBox:hover, QComboBox:hover {{ border-color: {LINE_2}; }}
 QLineEdit:focus, QSpinBox:focus, QComboBox:focus {{ border-color: {TEXT_3}; }}
 QLineEdit:disabled, QSpinBox:disabled, QComboBox:disabled {{ color: {TEXT_3}; background: {SURFACE}; }}
 QLineEdit#locked {{ background: transparent; border-color: transparent; color: {TEXT_2}; }}
-QLineEdit#time {{ font-size: {FS_TITLE}px; font-weight: {W_SEMI}; padding: 0; }}
 QLineEdit#search {{ padding-left: {S3 + ICON + S2 - 2}px; }}
 QAbstractSpinBox QLineEdit {{ padding: 0; border: none; background: transparent; min-height: 0; max-height: none; }}
 QSpinBox {{ padding-right: {S6}px; }}

@@ -41,9 +41,10 @@ def urls(kind: str, name: str) -> list[str]:
 
 
 def local_path(kind: str, name: str) -> Path | None:
+    """Najpierw grafiki dołączone do aplikacji (PNG w wysokiej jakości, potem GIF), na końcu pobrane."""
     sub = "imbuements" if kind == "imb" else "items"
-    for base in (BUNDLED / sub, CACHE / sub):
-        p = base / file_name(name)
+    stem = name.replace(" ", "_")
+    for p in (BUNDLED / sub / f"{stem}.png", BUNDLED / sub / f"{stem}.gif", CACHE / sub / f"{stem}.gif"):
         if p.exists() and p.stat().st_size:
             return p
     return None
@@ -109,25 +110,26 @@ class IconStore(QObject):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._cache: dict[tuple[str, str], QPixmap] = {}
+        self._cache: dict[tuple, QPixmap] = {}
         self._pending: set[tuple[str, str]] = set()
         self._failed: set[tuple[str, str]] = set()
-        self.ready.connect(lambda k, n: self._cache.pop((k, n), None))
+        self.ready.connect(lambda k, n: [self._cache.pop(key) for key in list(self._cache) if key[:2] == (k, n)])
 
-    def get(self, kind: str, name: str) -> QPixmap:
-        key = (kind, name)
+    def get(self, kind: str, name: str, size: int = SIZE) -> QPixmap:
+        key = (kind, name, size)
         if key in self._cache:
             return self._cache[key]
         p = local_path(kind, name)
         if p:
-            pm = sprite(p)
+            pm = sprite(p, size)
             if not pm.isNull():
                 self._cache[key] = pm
                 return pm
-        if key not in self._pending and key not in self._failed:
-            self._pending.add(key)
-            threading.Thread(target=self._fetch, args=key, daemon=True).start()
-        return placeholder(name)
+        job = (kind, name)
+        if job not in self._pending and job not in self._failed:
+            self._pending.add(job)
+            threading.Thread(target=self._fetch, args=job, daemon=True).start()
+        return placeholder(name, size)
 
     def _fetch(self, kind, name):
         try:

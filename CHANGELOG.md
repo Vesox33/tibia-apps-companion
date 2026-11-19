@@ -1,5 +1,11 @@
 # Zmiany
 
+## [1.0.3] – 2026-11-19
+
+- Nowe, wygodniejsze wpisywanie godzin w rezerwacji i snajperze: wpisujesz same cyfry, kółkiem myszy ±5 min
+- Nowe ikonki imbuementów
+- Poprawka: boosted creature i boosted boss czasem nie zmieniały się po server save
+
 ## [1.0.2] – 2026-11-14
 
 - Nowy wygląd aplikacji

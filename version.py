@@ -1,5 +1,5 @@
 # Wersja aplikacji – podbijana przez tools/release.py przy wydawaniu.
-VERSION = "1.0.2"
+VERSION = "1.0.3"
 
 # Repozytorium GitHub, z którego aplikacja pobiera aktualizacje: "właściciel/nazwa".
 # Musi być publiczne – aplikacja pobiera z niego wydania bez logowania.
