@@ -102,6 +102,10 @@ class _Sig(QObject):
     fail = Signal(object)
 
 
+class _UpdateProgress(QObject):
+    step = Signal(object, object)   # pobrane bajty, rozmiar (0 = nieznany)
+
+
 class Job(QRunnable):
     def __init__(self, fn, ok, err):
         super().__init__()
@@ -1006,7 +1010,9 @@ class MainWindow(QMainWindow):
             self.log(f"✔ Zaktualizowano do wersji {VERSION}.", "Aktualizacje")
         self.cfg.data["last_version"] = VERSION
         self.cfg.save()
+        updater.ulog(f"start aplikacji: wersja {VERSION}, folder {updater.APP_DIR}")
         if updater.FAIL_MARKER.exists():
+            updater.ulog("poprzednia aktualizacja: kopiowanie plików nie powiodło się (zob. update.log.robocopy.txt)")
             updater.FAIL_MARKER.unlink(missing_ok=True)
             QTimer.singleShot(1000, lambda: T.warn(
                 self, "Aktualizacja", "Poprzednia aktualizacja się nie udała – część plików była zablokowana "
@@ -1665,6 +1671,7 @@ class MainWindow(QMainWindow):
 
         def err(e):
             msg = str(e) if isinstance(e, updater.UpdateError) else f"nie udało się sprawdzić ({e.__class__.__name__})"
+            updater.ulog(f"check: BŁĄD {e!r}")
             if not silent:
                 self.log(f"✖ {msg}", "Aktualizacje")
             if done:
@@ -1684,41 +1691,73 @@ class MainWindow(QMainWindow):
         box.setDefaultButton(yes)
         box.exec()
         if box.clickedButton() is not yes:
+            updater.ulog(f"install: użytkownik odłożył aktualizację do {rel.version}")
             return
+        updater.ulog(f"install: start aktualizacji {VERSION} → {rel.version}")
         if sys.platform != "win32":
             T.info(self, "Aktualizacja", f"Pobierz ręcznie: {rel.url}")
             return
         if not updater.can_write_app_dir():
+            updater.ulog(f"install: brak prawa zapisu w {updater.APP_DIR}")
             T.warn(self, "Aktualizacja",
                    f"Nie mogę zapisywać w folderze aplikacji:\n{updater.APP_DIR}\n\n"
                    "Przenieś folder aplikacji np. do Dokumentów (poza Program Files) i spróbuj ponownie.")
             return
-        prog = QProgressDialog("Pobieranie aktualizacji…", None, 0, 0, self)
+        prog = QProgressDialog("Łączenie z GitHubem…", None, 0, 0, self)
         prog.setWindowTitle("Aktualizacja")
         prog.setMinimumDuration(0)
         prog.setCancelButton(None)
         prog.setWindowModality(Qt.WindowModal)
+        prog.setMinimumWidth(T.S6 * 15)
         prog.show()
+
+        # postęp z wątku pobierania → okienko (sygnał przechodzi bezpiecznie do wątku GUI)
+        sig = _UpdateProgress(prog)
+        mb = lambda n: f"{n / 1048576:.0f} MB"
+
+        def on_progress(done, total):
+            if total and done >= total:
+                prog.setLabelText("Rozpakowywanie…")
+                prog.setRange(0, 0)
+            elif total:
+                prog.setRange(0, 1000)
+                prog.setValue(int(done * 1000 / total))
+                prog.setLabelText(f"Pobieranie aktualizacji: {mb(done)} z {mb(total)}")
+            else:
+                prog.setLabelText(f"Pobieranie aktualizacji: {mb(done)}")
+        sig.step.connect(on_progress)
+        last = [0.0]
+
+        def report(done, total):
+            import time as _t
+            now = _t.monotonic()
+            if now - last[0] >= 0.2 or (total and done >= total):
+                last[0] = now
+                sig.step.emit(done, total)
 
         def ok(root):
             prog.close()
+            updater.ulog("install: pobrane i rozpakowane, uruchamiam podmianę plików")
             try:
                 updater.launch(root)
             except Exception as e:
+                updater.ulog(f"install: launch nie powiódł się: {e!r}")
                 T.warn(self, "Aktualizacja", f"Nie udało się uruchomić aktualizacji:\n{e}")
                 return
             self.log(f"Instaluję wersję {rel.version} – aplikacja uruchomi się ponownie.", "Aktualizacje")
             # pewne zakończenie procesu, nawet gdy jakiś wątek w tle (np. przeglądarka huntów) jeszcze działa –
             # skrypt aktualizacji czeka właśnie na zamknięcie tego procesu
             import threading
-            threading.Timer(4.0, os._exit, args=(0,)).start()
+            threading.Timer(4.0, lambda: (updater.ulog("install: wymuszam zamknięcie procesu"), os._exit(0))).start()
+            updater.ulog("install: zamykam aplikację")
             self.close()
             QApplication.quit()
 
         def err(e):
             prog.close()
+            updater.ulog(f"install: pobieranie nie powiodło się: {e!r}")
             T.warn(self, "Aktualizacja", f"Nie udało się pobrać aktualizacji:\n{e}\n\nMożesz pobrać ją ręcznie: {rel.url}")
-        self.run_job(lambda: updater.prepare(rel), ok, err)
+        self.run_job(lambda: updater.prepare(rel, report), ok, err, dedicated=True)
 
     def open_settings(self, section: int = 0):
         from settings_ui import SettingsDialog
@@ -1763,7 +1802,7 @@ class MainWindow(QMainWindow):
             w.setEnabled(on)
 
     # ---------- dane
-    def run_job(self, fn, ok, err):
+    def run_job(self, fn, ok, err, dedicated: bool = False):
         """Trzyma referencję do zadania, dopóki wynik nie wróci do wątku GUI (inaczej Python
         może usunąć obiekt sygnałów w trakcie – to powodowało losowe crashe)."""
         job = Job(fn, None, None)
@@ -1781,7 +1820,11 @@ class MainWindow(QMainWindow):
 
         job.sig.done.connect(done)
         job.sig.fail.connect(fail)
-        self.pool.start(job)
+        if dedicated:     # długie zadanie (pobieranie aktualizacji) – własny wątek, nie czeka w kolejce puli
+            import threading
+            threading.Thread(target=job.run, name="job", daemon=True).start()
+        else:
+            self.pool.start(job)
 
     def refresh(self):
         if self._busy:

@@ -337,6 +337,20 @@ class SettingsDialog(QDialog):
         v.addWidget(hint(f"Folder aplikacji: {updater.APP_DIR}"))
         lay.addWidget(g)
 
+        g, v = group("Log aktualizacji")
+        r = T.hbox(spacing=T.S3)
+        pl = T.label(str(updater.LOG), "hint", wrap=True)
+        pl.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        r.addWidget(pl, 1)
+        if sys.platform == "win32":
+            b = T.button("Otwórz", "file")
+            b.clicked.connect(lambda: updater.LOG.exists() and os.startfile(updater.LOG))
+            r.addWidget(b, 0, Qt.AlignVCenter)
+        v.addLayout(r)
+        v.addWidget(hint("Każdy krok aktualizacji: pobieranie, podmiana plików, ponowne uruchomienie. "
+                         "Jeśli coś nie działa, wyślij ten plik."))
+        lay.addWidget(g)
+
 
     def _check_now(self):
         self.upd_btn.setEnabled(False)

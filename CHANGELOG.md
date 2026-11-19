@@ -1,5 +1,10 @@
 # Zmiany
 
+## [1.0.4] – 2026-11-19
+
+- Okno aktualizacji pokazuje postęp pobierania (MB i pasek) zamiast samego kręciołka
+- Szczegółowy log aktualizacji (`update.log`), do otwarcia w Ustawienia → Aktualizacje
+
 ## [1.0.3] – 2026-11-19
 
 - Nowe, wygodniejsze wpisywanie godzin w rezerwacji i snajperze: wpisujesz same cyfry, kółkiem myszy ±5 min
